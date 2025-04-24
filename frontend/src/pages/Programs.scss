@@ -1,0 +1,133 @@
+.programs-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    .arrow-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+
+        .backarrow {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+    }
+
+    .day-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+
+        button {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                border-color: #007bff;
+                color: #007bff;
+            }
+
+            &.active {
+                background: #007bff;
+                color: white;
+                border-color: #007bff;
+            }
+        }
+    }
+
+    .exercises-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+
+        .exercise-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+            h3 {
+                font-size: 20px;
+                margin: 0 0 15px 0;
+                color: #333;
+            }
+
+            .exercise-details {
+                margin-bottom: 15px;
+
+                p {
+                    margin: 5px 0;
+                    color: #666;
+                    font-size: 14px;
+
+                    &.category {
+                        color: #007bff;
+                        font-weight: 500;
+                    }
+                }
+            }
+
+            .video-container {
+                margin: 15px 0;
+                border-radius: 8px;
+                overflow: hidden;
+
+                video {
+                    width: 100%;
+                    height: auto;
+                    display: block;
+                }
+            }
+
+            .steps-container {
+                h4 {
+                    font-size: 16px;
+                    margin: 15px 0 10px;
+                    color: #333;
+                }
+
+                .step {
+                    display: flex;
+                    margin-bottom: 10px;
+                    align-items: flex-start;
+
+                    .step-number {
+                        background: #007bff;
+                        color: white;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 10px;
+                        flex-shrink: 0;
+                        font-size: 14px;
+                    }
+
+                    .step-text {
+                        margin: 0;
+                        color: #666;
+                        font-size: 14px;
+                        line-height: 1.4;
+                    }
+                }
+            }
+        }
+    }
+}
