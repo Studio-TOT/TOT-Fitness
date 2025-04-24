@@ -7,7 +7,9 @@ const EXERCISES_FILE = path.join(__dirname, '../../data/exercises.json');
 
 // Function to introduce delay between requests
 function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
 }
 
 async function fetchExerciseData(url) {

@@ -129,7 +129,10 @@ function BodyPartExercises({ exercises, handleExerciseChange, isLoading }) {
           <Exercise
             key={e.id}
             name={e.exercise_name}
-            video={e.images?.male?.[0]?.branded_video || e.images?.female?.[0]?.branded_video}
+            video={
+              e.images?.male?.[0]?.branded_video ||
+              e.images?.female?.[0]?.branded_video
+            }
             description={e.steps}
             category={e.category}
           />

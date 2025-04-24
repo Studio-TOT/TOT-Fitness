@@ -14,7 +14,10 @@ function Day({ prog, exercises, index }) {
           <Exercise
             key={exercise.id}
             name={exercise.exercise_name}
-            video={exercise.images?.male?.[0]?.branded_video || exercise.images?.female?.[0]?.branded_video}
+            video={
+              exercise.images?.male?.[0]?.branded_video ||
+              exercise.images?.female?.[0]?.branded_video
+            }
             description={exercise.steps}
             category={exercise.category}
           />

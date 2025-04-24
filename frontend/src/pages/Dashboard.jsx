@@ -32,6 +32,11 @@ export default function Dashboard({ exercises }) {
     bodyweight: [],
   });
 
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [weekLeft, setWeekLeft] = useState(12);
+  const [openPopUp, setOpenPopUp] = useState(false);
+  const [imgSelect, setImgSelect] = useState(1);
+
   useEffect(() => {
     setPrograms({
       bootypump: generateBootyPumpProgram(exercises),
@@ -41,41 +46,8 @@ export default function Dashboard({ exercises }) {
     });
   }, [exercises]);
 
-  const getProgramTitle = (type) => {
-    switch (type) {
-      case "bootypump":
-        return "Booty Pump Program";
-      case "musclebuilding":
-        return "Muscle Building Program";
-      case "fullbody":
-        return "Full Body Program";
-      case "bodyweight":
-        return "Bodyweight Program";
-      default:
-        return "Program";
-    }
-  };
-
-  const getProgramDescription = (type) => {
-    switch (type) {
-      case "bootypump":
-        return "Build your best butt with this glute-focused program";
-      case "musclebuilding":
-        return "Sculpt your ideal physique with this muscle-building program";
-      case "fullbody":
-        return "Achieve full-body fitness with this comprehensive program";
-      case "bodyweight":
-        return "Get fit anywhere without equipment with this bodyweight program";
-      default:
-        return "";
-    }
-  };
-
   const dayArr = Array.from({ length: 7 }, (v, k) => k + 1);
   const weekArr = Array.from({ length: 12 }, (v, k) => k + 1);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [weekLeft, setWeekLeft] = useState(12);
-  const [openPopUp, setOpenPopUp] = useState(false);
 
   const handleCheck = (e) => {
     e.stopPropagation();
@@ -86,6 +58,7 @@ export default function Dashboard({ exercises }) {
       }, "3000");
     }
   };
+
   const progMuscleBuilding = weekArr.map((a, i) => {
     return (
       <div key={weekArr.indexOf(a)}>
@@ -186,8 +159,6 @@ export default function Dashboard({ exercises }) {
   const handleNav = () => {
     nav(-1);
   };
-
-  const [imgSelect, setImgSelect] = useState(1);
 
   return (
     <>

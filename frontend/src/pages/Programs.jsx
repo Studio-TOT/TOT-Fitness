@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   generateBootyPumpProgram,
   generateMuscleBuildingProgram,
   generateFullBodyProgram,
   generateBodyweightProgram,
 } from "../utils/programGenerator";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Start from "../components/Start";
 import Day from "../components/Day";
 import bp1 from "../assets/bp1.png";
@@ -19,10 +19,9 @@ import mb1 from "../assets/mb1.png";
 import fb1 from "../assets/fb1.png";
 import backarrow from "../assets/back-arrow.svg";
 
-function Programs({ exercises }) {
+export default function Programs({ exercises }) {
   const { programType } = useParams();
   const [program, setProgram] = useState([]);
-  const [currentDay, setCurrentDay] = useState(0);
   const [expandedWeek, setExpandedWeek] = useState(null);
   const nav = useNavigate();
 
@@ -47,40 +46,6 @@ function Programs({ exercises }) {
     setProgram(generatedProgram);
   }, [programType, exercises]);
 
-  const handleDayChange = (day) => {
-    setCurrentDay(day);
-  };
-
-  const getProgramTitle = () => {
-    switch (programType) {
-      case "bootypump":
-        return "Booty Pump Program";
-      case "musclebuilding":
-        return "Muscle Building Program";
-      case "fullbody":
-        return "Full Body Program";
-      case "bodyweight":
-        return "Bodyweight Program";
-      default:
-        return "Program";
-    }
-  };
-
-  const getDayTitle = (day) => {
-    switch (programType) {
-      case "bootypump":
-        return day === 0 ? "Glute Focus" : day === 1 ? "Leg Focus" : "Full Lower Body";
-      case "musclebuilding":
-        return day === 0 ? "Push Day" : day === 1 ? "Pull Day" : "Leg Day";
-      case "fullbody":
-        return `Full Body Day ${day + 1}`;
-      case "bodyweight":
-        return day === 0 ? "Upper Body" : day === 1 ? "Lower Body" : "Full Body";
-      default:
-        return `Day ${day + 1}`;
-    }
-  };
-
   const dayArr = Array.from({ length: program.length }, (v, k) => k + 1);
   const weekArr = Array.from({ length: 12 }, (v, k) => k + 1);
 
@@ -90,6 +55,10 @@ function Programs({ exercises }) {
 
   const handleNav = () => {
     nav(-1);
+  };
+
+  const handleWeekChange = (index) => {
+    setExpandedWeek(expandedWeek === index ? null : index);
   };
 
   const progdesc = () => {
@@ -298,46 +267,6 @@ function Programs({ exercises }) {
     return null;
   };
 
-  const monAutreTruc = weekArr.map((a, i) => {
-    return (
-      <div className="accordionweek" key={`week-${i}`}>
-        <Accordion
-          expanded={expandedWeek === i}
-          onChange={() => setExpandedWeek(expandedWeek === i ? null : i)}
-          sx={{
-            backgroundColor: "white !important",
-            borderRadius: "16px !important",
-            border: "none",
-            color: "black",
-            margin: "4px auto 0px auto !important",
-            width: "95%",
-            fontFamily: "Arial !important",
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
-          >
-            <p>Week {i + 1}</p>
-          </AccordionSummary>
-          <AccordionDetails>
-            {dayArr.map((e, index) => {
-              return (
-                <Day 
-                  key={`day-${index}`}
-                  prog={program[index]} 
-                  exercises={exercises} 
-                  index={index} 
-                />
-              );
-            })}
-          </AccordionDetails>
-        </Accordion>
-      </div>
-    );
-  });
-
   return (
     <div className="programs-page">
       <div className="program">
@@ -353,7 +282,43 @@ function Programs({ exercises }) {
         <div className="programimage">
           <div className="progpic">{svg()}</div>
         </div>
-        <div className="programcontainer">{monAutreTruc}</div>
+        <div className="programcontainer">
+          {weekArr.map((week, index) => (
+            <div className="accordionweek" key={`week-${week}`}>
+              <Accordion
+                expanded={expandedWeek === index}
+                onChange={() => handleWeekChange(index)}
+                sx={{
+                  backgroundColor: "white !important",
+                  borderRadius: "16px !important",
+                  border: "none",
+                  color: "black",
+                  margin: "4px auto 0px auto !important",
+                  width: "95%",
+                  fontFamily: "Arial !important",
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel1a-content"
+                  id="panel1a-header"
+                >
+                  <p>Week {index + 1}</p>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {dayArr.map((day, dayIndex) => (
+                    <Day
+                      key={`day-${day}`}
+                      prog={program[dayIndex]}
+                      exercises={exercises}
+                      index={dayIndex}
+                    />
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -362,5 +327,3 @@ function Programs({ exercises }) {
 Programs.propTypes = {
   exercises: PropTypes.arrayOf(PropTypes.shape).isRequired,
 };
-
-export default Programs;

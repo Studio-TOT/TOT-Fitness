@@ -1,28 +1,32 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+const { Pool } = require("pg");
+const fs = require("fs");
+const path = require("path");
 
 // Database configuration
 const pool = new Pool({
-    user: 'omci',
-    host: 'localhost',
-    database: 'exercises_db',
-    password: '',
+    user: "omci",
+    host: "localhost",
+    database: "exercises_db",
+    password: "",
     port: 5432,
 });
 
 // Read the JSON file
-const exercisesData = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/exercises.json'), 'utf8'));
+const exercisesData = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "../data/exercises.json"), "utf8")
+);
 
 async function importExercises() {
     const client = await pool.connect();
     try {
-        await client.query('BEGIN');
+        await client.query("BEGIN");
 
         // Import exercises
+        // Note: Using await in loop is necessary here as we need sequential database operations
+        // to maintain data consistency and handle foreign key relationships
         for (const exercise of exercisesData) {
             // Insert main exercise data
-            const exerciseResult = await client.query(
+            await client.query(
                 `INSERT INTO exercises (
           id, name, name_en_us, name_alternative, slug, description, description_en_us,
           need_warmup, advanced_weight, featured_weight, weight, impact,
@@ -45,7 +49,7 @@ async function importExercises() {
                     exercise.use_youtube_links,
                     exercise.featured,
                     exercise.sponsered_link,
-                    exercise.status
+                    exercise.status,
                 ]
             );
 
@@ -71,7 +75,7 @@ async function importExercises() {
                             muscle.rght,
                             muscle.tree_id,
                             muscle.level,
-                            muscle.parent
+                            muscle.parent,
                         ]
                     );
 
@@ -82,9 +86,9 @@ async function importExercises() {
                         [
                             exercise.id,
                             muscle.id,
-                            exercise.muscles_primary?.some(m => m.id === muscle.id) || false,
-                            exercise.muscles_secondary?.some(m => m.id === muscle.id) || false,
-                            exercise.muscles_tertiary?.some(m => m.id === muscle.id) || false
+                            exercise.muscles_primary?.some((m) => m.id === muscle.id) || false,
+                            exercise.muscles_secondary?.some((m) => m.id === muscle.id) || false,
+                            exercise.muscles_tertiary?.some((m) => m.id === muscle.id) || false,
                         ]
                     );
                 }
@@ -110,7 +114,7 @@ async function importExercises() {
                         exercise.category.featured,
                         exercise.category.image,
                         exercise.category.mobile_icon,
-                        exercise.category.description
+                        exercise.category.description,
                     ]
                 );
 
@@ -142,7 +146,7 @@ async function importExercises() {
                             category.featured,
                             category.image,
                             category.mobile_icon,
-                            category.description
+                            category.description,
                         ]
                     );
 
@@ -160,7 +164,11 @@ async function importExercises() {
                     `INSERT INTO difficulties (id, name, name_en_us)
           VALUES ($1, $2, $3)
           ON CONFLICT (id) DO NOTHING`,
-                    [exercise.difficulty.id, exercise.difficulty.name, exercise.difficulty.name_en_us]
+                    [
+                        exercise.difficulty.id,
+                        exercise.difficulty.name,
+                        exercise.difficulty.name_en_us,
+                    ]
                 );
             }
 
@@ -176,7 +184,7 @@ async function importExercises() {
                         exercise.force.url_name,
                         exercise.force.name_en_us,
                         exercise.force.description,
-                        exercise.force.description_en_us
+                        exercise.force.description_en_us,
                     ]
                 );
             }
@@ -193,7 +201,7 @@ async function importExercises() {
                         exercise.mechanic.url_name,
                         exercise.mechanic.name_en_us,
                         exercise.mechanic.description,
-                        exercise.mechanic.description_en_us
+                        exercise.mechanic.description_en_us,
                     ]
                 );
             }
@@ -207,7 +215,7 @@ async function importExercises() {
                         exercise.id,
                         exercise.difficulty?.id,
                         exercise.force?.id,
-                        exercise.mechanic?.id
+                        exercise.mechanic?.id,
                     ]
                 );
             }
@@ -235,12 +243,12 @@ async function importExercises() {
                             [
                                 image.id,
                                 exercise.id,
-                                'male',
+                                "male",
                                 image.order,
                                 image.og_image,
                                 image.original_video,
                                 image.unbranded_video,
-                                image.branded_video
+                                image.branded_video,
                             ]
                         );
                     }
@@ -256,12 +264,12 @@ async function importExercises() {
                             [
                                 image.id,
                                 exercise.id,
-                                'female',
+                                "female",
                                 image.order,
                                 image.og_image,
                                 image.original_video,
                                 image.unbranded_video,
-                                image.branded_video
+                                image.branded_video,
                             ]
                         );
                     }
@@ -269,14 +277,17 @@ async function importExercises() {
             }
         }
 
-        await client.query('COMMIT');
-        console.log('Data import completed successfully!');
-    } catch (err) {
-        await client.query('ROLLBACK');
-        console.error('Error importing data:', err);
+        await client.query("COMMIT");
+        console.log("Data import completed successfully!");
+    } catch (error) {
+        await client.query("ROLLBACK");
+        console.error("Error importing data:", error);
+        throw error;
     } finally {
         client.release();
     }
 }
 
-importExercises().catch(console.error); 
+module.exports = {
+    importExercises,
+}; 

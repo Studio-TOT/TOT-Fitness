@@ -53,7 +53,7 @@ function Exercise({ name, video, description, category }) {
         >
           <Typography id="exercise-title">{name}</Typography>
           {category && (
-            <Typography id="exercise-category" sx={{ ml: 2, color: 'gray' }}>
+            <Typography id="exercise-category" sx={{ ml: 2, color: "gray" }}>
               {category}
             </Typography>
           )}
@@ -69,13 +69,15 @@ function Exercise({ name, video, description, category }) {
           )}
           <div id="exercise-description">
             {description && description.length > 0 ? (
-              description.map((e, i) => (
-                <div id="steps" key={i}>
-                  <span>{i + 1} :</span> <p>{e}</p>
+              description.map((e) => (
+                <div id="steps" key={`${name}-step-${e.substring(0, 20)}`}>
+                  <span>{description.indexOf(e) + 1} :</span> <p>{e}</p>
                 </div>
               ))
             ) : (
-              <div className="no-description">No description available for this exercise</div>
+              <div className="no-description">
+                No description available for this exercise
+              </div>
             )}
           </div>
         </AccordionDetails>
