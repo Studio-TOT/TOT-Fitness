@@ -2,24 +2,29 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432,
-});
+// Use DATABASE_URL if available, otherwise use individual connection parameters
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false // Required for Railway
+      }
+    }
+    : {
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: process.env.DB_PORT || 5432,
+    }
+);
 
 // Get all exercises with their related data
 router.get('/', async (req, res) => {
   try {
     console.log('Attempting to fetch exercises from database...');
-    console.log('Database config:', {
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      port: process.env.DB_PORT || 5432
-    });
+    console.log('Using database connection:', process.env.DATABASE_URL ? 'DATABASE_URL' : 'Individual parameters');
 
     const result = await pool.query(`
       SELECT 
