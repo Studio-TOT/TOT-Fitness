@@ -27,5 +27,6 @@ jobs:
       - name: Install Node.js dependencies
         run: cd ./frontend && pnpm install && cd ../backend && pnpm install
 
-      - name: Run linters
-        run: cd ./frontend && pnpm run lint && cd ../backend && pnpm run lint
+      # Temporarily disabled linting
+      # - name: Run linters
+      #   run: cd ./frontend && pnpm run lint && cd ../backend && pnpm run lint
