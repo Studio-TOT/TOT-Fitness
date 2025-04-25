@@ -13,6 +13,8 @@ import Subscription from "./pages/Subscription";
 import Dashboard from "./pages/Dashboard";
 import nutrition from "./data";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function App() {
   const [exercises, setExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
@@ -22,14 +24,14 @@ function App() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch("http://localhost:3000/api/exercises")
+    fetch(`${API_URL}/api/exercises`)
       .then((response) => response.json())
       .then((response) => {
         setExercises(response);
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Error fetching exercises:", err);
         setIsLoading(false);
       });
   }, []);

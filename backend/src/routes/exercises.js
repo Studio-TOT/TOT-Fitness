@@ -3,17 +3,25 @@ const router = express.Router();
 const { Pool } = require('pg');
 
 const pool = new Pool({
-    user: 'omci',
-    host: 'localhost',
-    database: 'exercises_db',
-    password: '',
-    port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT || 5432,
 });
 
 // Get all exercises with their related data
 router.get('/', async (req, res) => {
-    try {
-        const result = await pool.query(`
+  try {
+    console.log('Attempting to fetch exercises from database...');
+    console.log('Database config:', {
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT || 5432
+    });
+
+    const result = await pool.query(`
       SELECT 
         e.*,
         json_agg(DISTINCT jsonb_build_object(
@@ -74,55 +82,61 @@ router.get('/', async (req, res) => {
       GROUP BY e.id
     `);
 
-        // Transform the data to match the frontend's expected format
-        const exercises = result.rows.map(exercise => ({
-            id: exercise.id,
-            exercise_name: exercise.name,
-            target: {
-                Primary: exercise.muscles
-                    .filter(m => m.is_primary)
-                    .map(m => m.name),
-                Secondary: exercise.muscles
-                    .filter(m => m.is_secondary)
-                    .map(m => m.name),
-                Tertiary: exercise.muscles
-                    .filter(m => m.is_tertiary)
-                    .map(m => m.name)
-            },
-            category: exercise.categories
-                .filter(c => c.is_primary)
-                .map(c => c.name)[0],
-            equipment: exercise.categories
-                .filter(c => !c.is_primary)
-                .map(c => c.name),
-            difficulty: exercise.difficulty?.[0]?.name,
-            force: exercise.force?.[0]?.name,
-            mechanic: exercise.mechanic?.[0]?.name,
-            steps: exercise.steps
-                .sort((a, b) => a.order - b.order)
-                .map(s => s.text),
-            images: {
-                male: exercise.images
-                    .filter(i => i.gender === 'male')
-                    .sort((a, b) => a.order - b.order),
-                female: exercise.images
-                    .filter(i => i.gender === 'female')
-                    .sort((a, b) => a.order - b.order)
-            }
-        }));
+    console.log(`Successfully fetched ${result.rows.length} exercises from database`);
 
-        res.json(exercises);
-    } catch (error) {
-        console.error('Error fetching exercises:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    // Transform the data to match the frontend's expected format
+    const exercises = result.rows.map(exercise => ({
+      id: exercise.id,
+      exercise_name: exercise.name,
+      target: {
+        Primary: exercise.muscles
+          .filter(m => m.is_primary)
+          .map(m => m.name),
+        Secondary: exercise.muscles
+          .filter(m => m.is_secondary)
+          .map(m => m.name),
+        Tertiary: exercise.muscles
+          .filter(m => m.is_tertiary)
+          .map(m => m.name)
+      },
+      category: exercise.categories
+        .filter(c => c.is_primary)
+        .map(c => c.name)[0],
+      equipment: exercise.categories
+        .filter(c => !c.is_primary)
+        .map(c => c.name),
+      difficulty: exercise.difficulty?.[0]?.name,
+      force: exercise.force?.[0]?.name,
+      mechanic: exercise.mechanic?.[0]?.name,
+      steps: exercise.steps
+        .sort((a, b) => a.order - b.order)
+        .map(s => s.text),
+      images: {
+        male: exercise.images
+          .filter(i => i.gender === 'male')
+          .sort((a, b) => a.order - b.order),
+        female: exercise.images
+          .filter(i => i.gender === 'female')
+          .sort((a, b) => a.order - b.order)
+      }
+    }));
+
+    res.json(exercises);
+  } catch (error) {
+    console.error('Error fetching exercises:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 });
 
 // Get exercises by muscle
 router.get('/muscle/:muscleName', async (req, res) => {
-    try {
-        const { muscleName } = req.params;
-        const result = await pool.query(`
+  try {
+    const { muscleName } = req.params;
+    const result = await pool.query(`
       SELECT 
         e.*,
         json_agg(DISTINCT jsonb_build_object(
@@ -184,48 +198,48 @@ router.get('/muscle/:muscleName', async (req, res) => {
       GROUP BY e.id
     `, [`%${muscleName}%`]);
 
-        // Transform the data to match the frontend's expected format
-        const exercises = result.rows.map(exercise => ({
-            id: exercise.id,
-            exercise_name: exercise.name,
-            target: {
-                Primary: exercise.muscles
-                    .filter(m => m.is_primary)
-                    .map(m => m.name),
-                Secondary: exercise.muscles
-                    .filter(m => m.is_secondary)
-                    .map(m => m.name),
-                Tertiary: exercise.muscles
-                    .filter(m => m.is_tertiary)
-                    .map(m => m.name)
-            },
-            category: exercise.categories
-                .filter(c => c.is_primary)
-                .map(c => c.name)[0],
-            equipment: exercise.categories
-                .filter(c => !c.is_primary)
-                .map(c => c.name),
-            difficulty: exercise.difficulty?.[0]?.name,
-            force: exercise.force?.[0]?.name,
-            mechanic: exercise.mechanic?.[0]?.name,
-            steps: exercise.steps
-                .sort((a, b) => a.order - b.order)
-                .map(s => s.text),
-            images: {
-                male: exercise.images
-                    .filter(i => i.gender === 'male')
-                    .sort((a, b) => a.order - b.order),
-                female: exercise.images
-                    .filter(i => i.gender === 'female')
-                    .sort((a, b) => a.order - b.order)
-            }
-        }));
+    // Transform the data to match the frontend's expected format
+    const exercises = result.rows.map(exercise => ({
+      id: exercise.id,
+      exercise_name: exercise.name,
+      target: {
+        Primary: exercise.muscles
+          .filter(m => m.is_primary)
+          .map(m => m.name),
+        Secondary: exercise.muscles
+          .filter(m => m.is_secondary)
+          .map(m => m.name),
+        Tertiary: exercise.muscles
+          .filter(m => m.is_tertiary)
+          .map(m => m.name)
+      },
+      category: exercise.categories
+        .filter(c => c.is_primary)
+        .map(c => c.name)[0],
+      equipment: exercise.categories
+        .filter(c => !c.is_primary)
+        .map(c => c.name),
+      difficulty: exercise.difficulty?.[0]?.name,
+      force: exercise.force?.[0]?.name,
+      mechanic: exercise.mechanic?.[0]?.name,
+      steps: exercise.steps
+        .sort((a, b) => a.order - b.order)
+        .map(s => s.text),
+      images: {
+        male: exercise.images
+          .filter(i => i.gender === 'male')
+          .sort((a, b) => a.order - b.order),
+        female: exercise.images
+          .filter(i => i.gender === 'female')
+          .sort((a, b) => a.order - b.order)
+      }
+    }));
 
-        res.json(exercises);
-    } catch (error) {
-        console.error('Error fetching exercises by muscle:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    res.json(exercises);
+  } catch (error) {
+    console.error('Error fetching exercises by muscle:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router; 
