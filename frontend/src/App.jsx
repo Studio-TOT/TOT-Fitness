@@ -13,7 +13,10 @@ import Subscription from "./pages/Subscription";
 import Dashboard from "./pages/Dashboard";
 import nutrition from "./data";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL) {
+  console.error("VITE_API_URL is not set in environment variables");
+}
 
 function App() {
   const [exercises, setExercises] = useState([]);
