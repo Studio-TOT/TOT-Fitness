@@ -1,12 +1,17 @@
 import { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Link, useParams, useNavigate } from "react-router-dom";
-
+import { useExercises } from "../context/ExerciseContext";
 import Exercise from "../components/Exercise";
 import imgFilter from "../assets/settings-sliders.png";
 import backarrow from "../assets/back-arrow.svg";
 
-function BodyPartExercises({ exercises, handleExerciseChange, isLoading }) {
+function BodyPartExercises() {
+  const { exercises, isLoading, error, fetchExercises, getExercisesByMuscle } = useExercises();
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const categories = [
     "Barbell",
     "Dumbbells",
@@ -23,36 +28,19 @@ function BodyPartExercises({ exercises, handleExerciseChange, isLoading }) {
   const nav = useNavigate();
   const { exercise } = useParams();
 
-  const [filter, setFilter] = useState([]);
-  const [filteredExercises, setFilteredExercises] = useState(exercises);
-  const [search, setSearch] = useState("");
-  const [filterOpen, setFilterOpen] = useState(false);
-
   useEffect(() => {
     if (exercise === "Lowerback") {
-      handleExerciseChange("Lower back");
+      setFilter("Lower back");
     } else if (exercise === "Midback") {
-      handleExerciseChange("Mid back");
+      setFilter("Mid back");
     } else {
-      handleExerciseChange(exercise);
+      setFilter(exercise);
     }
-  }, [exercise, handleExerciseChange]);
+  }, [exercise]);
 
   useEffect(() => {
-    if (filter.length === 0) {
-      setFilteredExercises(exercises);
-      return;
-    }
-    if (filter && filter !== "false") {
-      setFilteredExercises(
-        exercises.filter((exo) => filter.some((str) => str === exo.category))
-      );
-      return;
-    }
-    if (exercises.length) {
-      setFilteredExercises(exercises);
-    }
-  }, [filter, exercises]);
+    fetchExercises();
+  }, [fetchExercises]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -70,60 +58,51 @@ function BodyPartExercises({ exercises, handleExerciseChange, isLoading }) {
     return <div className="loading">Loading exercises...</div>;
   }
 
+  if (error) {
+    return <div className="error">Error loading exercises: {error}</div>;
+  }
+
+  const filteredExercises = getExercisesByMuscle(exercises, filter);
+
   return (
-    <div className="body-part-exercises">
-      <div className="arrow-title">
-        <Link to="/" onClick={handleNav}>
-          <img className="backarrow" src={backarrow} alt="backarrow" />
-        </Link>
-        <h2>{exercise} exercises</h2>
-      </div>
-      <div className="filter-search">
-        <button type="button" className="btn-filter" onClick={openFilter}>
-          <img src={imgFilter} alt="" /> <span>Filters</span>
+    <div className="bodypart-exercises">
+      <div className="header">
+        <button type="button" onClick={handleNav} className="back-button">
+          <img src={backarrow} alt="back" />
         </button>
+        <h1>{filter}</h1>
+        <button type="button" onClick={openFilter} className="filter-button">
+          <img src={imgFilter} alt="filter" />
+        </button>
+      </div>
+
+      <div className="search-bar">
         <input
-          className="searchbar"
           type="text"
-          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search exercises..."
           value={search}
-          placeholder="Search your exercise"
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-      <div className={filterOpen ? "filters filters-open" : "filters"}>
-        {categories.map((c) => (
-          <Fragment key={categories.indexOf(c)}>
-            <input
-              type="checkbox"
-              name=""
-              id=""
-              value={c}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setFilter((prevState) => {
-                    if (!prevState.includes(c)) {
-                      return [...prevState, c];
-                    }
-                    return prevState;
-                  });
-                } else {
-                  setFilter((prevState) => {
-                    const prevStateCopy = [...prevState];
-                    const indexOf = prevState.indexOf(c);
-                    prevStateCopy.splice(indexOf, 1);
-                    return prevStateCopy;
-                  });
-                }
-              }}
-            />
-            <label htmlFor={c}>{c}</label>
-          </Fragment>
-        ))}
-      </div>
+
+      {filterOpen && (
+        <div className="filter-options">
+          {categories.map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setFilter(category)}
+              className={filter === category ? "active" : ""}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      )}
 
       {filteredExercises
         ?.filter((item) =>
-          item.exercise_name.toLowerCase().includes(search.toLowerCase())
+          item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
         )
         .map((e) => (
           <Exercise
@@ -139,17 +118,11 @@ function BodyPartExercises({ exercises, handleExerciseChange, isLoading }) {
         ))}
       <div className="error-msg">
         {filteredExercises?.filter((item) =>
-          item.exercise_name.toLowerCase().includes(search.toLowerCase())
+          item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
         ).length === 0 && "Sorry, nothing to see here."}
       </div>
     </div>
   );
 }
-
-BodyPartExercises.propTypes = {
-  exercises: PropTypes.arrayOf(PropTypes.shape).isRequired,
-  handleExerciseChange: PropTypes.func.isRequired,
-  isLoading: PropTypes.bool.isRequired,
-};
 
 export default BodyPartExercises;
