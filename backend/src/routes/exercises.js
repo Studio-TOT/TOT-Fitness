@@ -2,12 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 
+// Log the database URL (without the password)
+console.log('Database URL:', process.env.DATABASE_URL ?
+  process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@') :
+  'Not set');
+
 // Use DATABASE_URL if available, otherwise use individual connection parameters
 const pool = new Pool(
   process.env.DATABASE_URL
     ? {
       connectionString: process.env.DATABASE_URL,
-      ssl: false
+      ssl: {
+        rejectUnauthorized: false,
+        sslmode: 'require'
+      }
     }
     : {
       user: process.env.DB_USER,
@@ -17,6 +25,11 @@ const pool = new Pool(
       port: process.env.DB_PORT || 5432,
     }
 );
+
+// Test the database connection
+pool.connect()
+  .then(() => console.log('Successfully connected to the database'))
+  .catch(err => console.error('Error connecting to the database:', err));
 
 // Get all exercises with their related data
 router.get('/', async (req, res) => {
@@ -85,52 +98,13 @@ router.get('/', async (req, res) => {
       GROUP BY e.id
     `);
 
-    console.log(`Successfully fetched ${result.rows.length} exercises from database`);
-
-    // Transform the data to match the frontend's expected format
-    const exercises = result.rows.map(exercise => ({
-      id: exercise.id,
-      exercise_name: exercise.name,
-      target: {
-        Primary: exercise.muscles
-          .filter(m => m.is_primary)
-          .map(m => m.name),
-        Secondary: exercise.muscles
-          .filter(m => m.is_secondary)
-          .map(m => m.name),
-        Tertiary: exercise.muscles
-          .filter(m => m.is_tertiary)
-          .map(m => m.name)
-      },
-      category: exercise.categories
-        .filter(c => c.is_primary)
-        .map(c => c.name)[0],
-      equipment: exercise.categories
-        .filter(c => !c.is_primary)
-        .map(c => c.name),
-      difficulty: exercise.difficulty?.[0]?.name,
-      force: exercise.force?.[0]?.name,
-      mechanic: exercise.mechanic?.[0]?.name,
-      steps: exercise.steps
-        .sort((a, b) => a.order - b.order)
-        .map(s => s.text),
-      images: {
-        male: exercise.images
-          .filter(i => i.gender === 'male')
-          .sort((a, b) => a.order - b.order),
-        female: exercise.images
-          .filter(i => i.gender === 'female')
-          .sort((a, b) => a.order - b.order)
-      }
-    }));
-
-    res.json(exercises);
+    console.log(`Successfully fetched ${result.rows.length} exercises`);
+    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching exercises:', error);
     res.status(500).json({
       error: 'Internal server error',
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: error.message
     });
   }
 });
