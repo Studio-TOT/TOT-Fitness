@@ -31,6 +31,55 @@ pool.connect()
   .then(() => console.log('Successfully connected to the database'))
   .catch(err => console.error('Error connecting to the database:', err));
 
+// Transform exercise data to match frontend format
+const transformExercise = (exercise) => {
+  const primaryMuscles = exercise.muscles
+    .filter(m => m.is_primary)
+    .map(m => m.name);
+
+  const secondaryMuscles = exercise.muscles
+    .filter(m => m.is_secondary)
+    .map(m => m.name);
+
+  const tertiaryMuscles = exercise.muscles
+    .filter(m => m.is_tertiary)
+    .map(m => m.name);
+
+  const primaryCategory = exercise.categories
+    .filter(c => c.is_primary)
+    .map(c => c.name)[0];
+
+  const equipment = exercise.categories
+    .filter(c => !c.is_primary)
+    .map(c => c.name);
+
+  return {
+    id: exercise.id,
+    exercise_name: exercise.name,
+    target: {
+      Primary: primaryMuscles,
+      Secondary: secondaryMuscles,
+      Tertiary: tertiaryMuscles
+    },
+    category: primaryCategory,
+    equipment,
+    difficulty: exercise.difficulty?.[0]?.name,
+    force: exercise.force?.[0]?.name,
+    mechanic: exercise.mechanic?.[0]?.name,
+    steps: exercise.steps
+      .sort((a, b) => a.order - b.order)
+      .map(s => s.text),
+    images: {
+      male: exercise.images
+        .filter(i => i.gender === 'male')
+        .sort((a, b) => a.order - b.order),
+      female: exercise.images
+        .filter(i => i.gender === 'female')
+        .sort((a, b) => a.order - b.order)
+    }
+  };
+};
+
 // Get all exercises with their related data
 router.get('/', async (req, res) => {
   try {
@@ -99,7 +148,11 @@ router.get('/', async (req, res) => {
     `);
 
     console.log(`Successfully fetched ${result.rows.length} exercises`);
-    res.json(result.rows);
+
+    // Transform the data to match the frontend's expected format
+    const transformedExercises = result.rows.map(transformExercise);
+
+    res.json(transformedExercises);
   } catch (error) {
     console.error('Error fetching exercises:', error);
     res.status(500).json({
