@@ -18,9 +18,7 @@
     "migrate": "cd ./backend && node migrate.js",
     "dev": "concurrently -c green,yellow -t \"HH:mm:ss\" -p \"{name} {time}\" \"npm:dev-front\" \"npm:dev-back\"",
     "dev-front": "cd ./frontend && npm run dev",
-    "dev-back": "cd ./backend && npm run dev",
-    "lint": "cross-env-shell \"cd ./frontend && $npm_package_config_cli run lint && cd ../backend && $npm_package_config_cli run lint\"",
-    "fix": "cross-env-shell \"cd ./frontend && $npm_package_config_cli run fix && cd ../backend && $npm_package_config_cli run fix\""
+    "dev-back": "cd ./backend && npm run dev"
   },
   "keywords": [],
   "author": "Wild Code School",
@@ -28,8 +26,7 @@
   "devDependencies": {
     "concurrently": "^7.6.0",
     "cross-env": "^7.0.3",
-    "eslint-import-resolver-webpack": "^0.13.2",
-    "husky": "^8.0.3"
+    "eslint-import-resolver-webpack": "^0.13.2"
   },
   "dependencies": {
     "cors": "^2.8.5",
