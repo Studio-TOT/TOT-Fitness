@@ -1,57 +1,103 @@
-// Helper function to get random exercises from a category
-const getRandomExercises = (exercises, category, count) => {
-  const categoryExercises = exercises.filter((ex) => ex.category === category);
-  const shuffled = [...categoryExercises].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
-};
-
 // Helper function to get exercises by muscle group
 export const getExercisesByMuscle = (exercises, muscleName) => {
   if (!Array.isArray(exercises)) return [];
-  return exercises.filter((exercise) =>
-    exercise.target?.Primary?.includes(muscleName) ||
-    exercise.target?.Secondary?.includes(muscleName) ||
-    exercise.target?.Tertiary?.includes(muscleName)
-  );
+
+  const muscleNameLower = muscleName.toLowerCase();
+  const filteredExercises = exercises.filter((exercise) => {
+    const primary = exercise.target?.Primary?.map(m => m.toLowerCase()) || [];
+    const secondary = exercise.target?.Secondary?.map(m => m.toLowerCase()) || [];
+    const tertiary = exercise.target?.Tertiary?.map(m => m.toLowerCase()) || [];
+
+    return primary.includes(muscleNameLower) ||
+      secondary.includes(muscleNameLower) ||
+      tertiary.includes(muscleNameLower);
+  });
+
+  return filteredExercises;
 };
 
-// Generate a booty pump program (focus on glutes and legs)
+// Create a week of exercises
+const createWeekExercises = (exercises, count = 5) => {
+  if (!Array.isArray(exercises)) return [];
+  const shuffled = [...exercises].sort(() => 0.5 - Math.random());
+  const selectedExercises = shuffled.slice(0, count);
+  return selectedExercises;
+};
+
+// Generate a program with exercises for each day
+const generateProgram = (exercises, count = 5) => {
+  if (!Array.isArray(exercises) || exercises.length === 0) {
+    // Create empty program structure
+    const emptyProgram = [];
+    for (let week = 0; week < 12; week++) {
+      const weekExercises = [];
+      for (let day = 0; day < 3; day++) {
+        weekExercises.push([]);
+      }
+      emptyProgram.push(weekExercises);
+    }
+    return emptyProgram;
+  }
+
+  // Create 12 weeks of exercises
+  const program = [];
+  for (let week = 0; week < 12; week++) {
+    const weekExercises = [];
+    // Create 3 days for each week
+    for (let day = 0; day < 3; day++) {
+      const dayExercises = createWeekExercises(exercises, count);
+      weekExercises.push(dayExercises);
+    }
+    program.push(weekExercises);
+  }
+
+  return program;
+};
+
+// Generate booty pump program
 export const generateBootyPumpProgram = (exercises) => {
   if (!Array.isArray(exercises)) return [];
   const gluteExercises = getExercisesByMuscle(exercises, "glutes");
   const quadExercises = getExercisesByMuscle(exercises, "quadriceps");
   const hamstringExercises = getExercisesByMuscle(exercises, "hamstrings");
 
-  return [...gluteExercises, ...quadExercises, ...hamstringExercises];
+  const allExercises = [...gluteExercises, ...quadExercises, ...hamstringExercises];
+  return generateProgram(allExercises);
 };
 
-// Generate a muscle building program (focus on major muscle groups)
+// Generate muscle building program
 export const generateMuscleBuildingProgram = (exercises) => {
   if (!Array.isArray(exercises)) return [];
-  const chestExercises = getExercisesByMuscle(exercises, "chest");
-  const backExercises = getExercisesByMuscle(exercises, "back");
-  const shoulderExercises = getExercisesByMuscle(exercises, "shoulders");
-  const armExercises = getExercisesByMuscle(exercises, "biceps").concat(
-    getExercisesByMuscle(exercises, "triceps")
-  );
 
-  return [
+  // Use muscle names that match the data capitalization
+  const chestExercises = getExercisesByMuscle(exercises, "Chest");
+  const backExercises = getExercisesByMuscle(exercises, "Back");
+  const shoulderExercises = getExercisesByMuscle(exercises, "Shoulders");
+  const bicepExercises = getExercisesByMuscle(exercises, "Biceps");
+  const tricepExercises = getExercisesByMuscle(exercises, "Triceps");
+
+  const allExercises = [
     ...chestExercises,
     ...backExercises,
     ...shoulderExercises,
-    ...armExercises,
+    ...bicepExercises,
+    ...tricepExercises
   ];
+
+  return generateProgram(allExercises);
 };
 
-// Generate a full body program
+// Generate full body program
 export const generateFullBodyProgram = (exercises) => {
   if (!Array.isArray(exercises)) return [];
-  const allExercises = [...exercises];
-  return allExercises.sort(() => Math.random() - 0.5).slice(0, 10);
+  return generateProgram(exercises);
 };
 
-// Generate a bodyweight program
+// Generate bodyweight program
 export const generateBodyweightProgram = (exercises) => {
   if (!Array.isArray(exercises)) return [];
-  return exercises.filter((exercise) => exercise.equipment?.includes("body weight"));
+  const bodyweightExercises = exercises.filter((exercise) =>
+    exercise.category === "Bodyweight"
+  );
+  return generateProgram(bodyweightExercises);
 };

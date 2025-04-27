@@ -7,7 +7,7 @@ import imgFilter from "../assets/settings-sliders.png";
 import backarrow from "../assets/back-arrow.svg";
 
 function BodyPartExercises() {
-  const { exercises, isLoading, error, fetchExercises, getExercisesByMuscle } = useExercises();
+  const { exercises, isLoading, error, fetchExercisesByBodyPart } = useExercises();
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -39,8 +39,10 @@ function BodyPartExercises() {
   }, [exercise]);
 
   useEffect(() => {
-    fetchExercises();
-  }, [fetchExercises]);
+    if (filter) {
+      fetchExercisesByBodyPart(filter);
+    }
+  }, [filter, fetchExercisesByBodyPart]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -62,26 +64,24 @@ function BodyPartExercises() {
     return <div className="error">Error loading exercises: {error}</div>;
   }
 
-  const filteredExercises = getExercisesByMuscle(exercises, filter);
-
   return (
-    <div className="bodypart-exercises">
-      <div className="header">
-        <button type="button" onClick={handleNav} className="back-button">
-          <img src={backarrow} alt="back" />
-        </button>
-        <h1>{filter}</h1>
-        <button type="button" onClick={openFilter} className="filter-button">
-          <img src={imgFilter} alt="filter" />
-        </button>
+    <div className="body-part-exercises">
+      <div className="arrow-title">
+        <Link to="/" onClick={handleNav}>
+          <img className="backarrow" src={backarrow} alt="backarrow" />
+        </Link>
+        <h2>{filter} exercises</h2>
       </div>
-
-      <div className="search-bar">
+      <div className="filter-search">
+        <button type="button" className="btn-filter" onClick={openFilter}>
+          <img src={imgFilter} alt="" /> <span>Filters</span>
+        </button>
         <input
+          className="searchbar"
           type="text"
-          placeholder="Search exercises..."
-          value={search}
           onChange={(e) => setSearch(e.target.value)}
+          value={search}
+          placeholder="Search your exercise"
         />
       </div>
 
@@ -100,27 +100,34 @@ function BodyPartExercises() {
         </div>
       )}
 
-      {filteredExercises
-        ?.filter((item) =>
-          item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
-        )
-        .map((e) => (
-          <Exercise
-            key={e.id}
-            name={e.exercise_name}
-            video={
-              e.images?.male?.[0]?.branded_video ||
-              e.images?.female?.[0]?.branded_video
-            }
-            description={e.steps}
-            category={e.category}
-          />
-        ))}
-      <div className="error-msg">
-        {filteredExercises?.filter((item) =>
-          item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
-        ).length === 0 && "Sorry, nothing to see here."}
-      </div>
+      {exercises.length > 0 ? (
+        exercises
+          .filter((item) =>
+            item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
+          )
+          .map((e) => (
+            <Exercise
+              key={e.id}
+              name={e.exercise_name}
+              video={
+                e.images?.male?.[0]?.branded_video ||
+                e.images?.female?.[0]?.branded_video
+              }
+              description={e.steps}
+              category={e.category}
+            />
+          ))
+      ) : (
+        <div className="error-msg">
+          {isLoading ? (
+            "Loading exercises..."
+          ) : error ? (
+            `Error: ${error}`
+          ) : (
+            "No exercises found for this body part. Please try another selection."
+          )}
+        </div>
+      )}
     </div>
   );
 }

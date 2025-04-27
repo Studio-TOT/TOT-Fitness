@@ -8,7 +8,6 @@ import "swiper/swiper-bundle.min.css";
 import "swiper/swiper.min.css";
 
 import { Pagination } from "swiper";
-import PropTypes from "prop-types";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -17,6 +16,7 @@ import Day from "../components/Day";
 import mb1 from "../assets/mb1.png";
 import bw1 from "../assets/bw1.png";
 import backarrow from "../assets/back-arrow.svg";
+import { useExercises } from "../context/ExerciseContext";
 import {
   generateBootyPumpProgram,
   generateMuscleBuildingProgram,
@@ -24,30 +24,55 @@ import {
   generateBodyweightProgram,
 } from "../utils/programGenerator";
 
-export default function Dashboard({ exercises }) {
+export default function Dashboard() {
+  const { exercises, isLoading, error, fetchExercises } = useExercises();
   const [programs, setPrograms] = useState({
     bootypump: [],
     musclebuilding: [],
     fullbody: [],
     bodyweight: [],
   });
-
   const [activeIndex, setActiveIndex] = useState(0);
   const [weekLeft, setWeekLeft] = useState(12);
   const [openPopUp, setOpenPopUp] = useState(false);
   const [imgSelect, setImgSelect] = useState(1);
+  const nav = useNavigate();
 
   useEffect(() => {
-    setPrograms({
-      bootypump: generateBootyPumpProgram(exercises),
-      musclebuilding: generateMuscleBuildingProgram(exercises),
-      fullbody: generateFullBodyProgram(exercises),
-      bodyweight: generateBodyweightProgram(exercises),
-    });
+    // Only fetch exercises if we don't have them yet
+    if (!exercises || exercises.length === 0) {
+      fetchExercises();
+    }
+  }, [exercises, fetchExercises]);
+
+  useEffect(() => {
+    if (exercises && exercises.length > 0) {
+      const generatedPrograms = {
+        bootypump: generateBootyPumpProgram(exercises),
+        musclebuilding: generateMuscleBuildingProgram(exercises),
+        fullbody: generateFullBodyProgram(exercises),
+        bodyweight: generateBodyweightProgram(exercises),
+      };
+      setPrograms(generatedPrograms);
+    } else {
+      // Create empty program structure for all program types
+      const emptyProgram = Array(12).fill().map(() => Array(3).fill().map(() => []));
+      setPrograms({
+        bootypump: emptyProgram,
+        musclebuilding: emptyProgram,
+        fullbody: emptyProgram,
+        bodyweight: emptyProgram,
+      });
+    }
   }, [exercises]);
 
-  const dayArr = Array.from({ length: 7 }, (v, k) => k + 1);
-  const weekArr = Array.from({ length: 12 }, (v, k) => k + 1);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleNav = () => {
+    nav(-1);
+  };
 
   const handleCheck = (e) => {
     e.stopPropagation();
@@ -59,9 +84,21 @@ export default function Dashboard({ exercises }) {
     }
   };
 
-  const progMuscleBuilding = weekArr.map((a, i) => {
+  const dayArr = Array.from({ length: 3 }, (v, k) => k + 1);
+  const weekArr = Array.from({ length: 12 }, (v, k) => k + 1);
+
+  if (isLoading) {
+    return <div className="loading">Loading dashboard...</div>;
+  }
+
+  if (error) {
+    return <div className="error">Error loading dashboard: {error}</div>;
+  }
+
+  const progMuscleBuilding = weekArr.map((week, weekIndex) => {
+    const weekExercises = programs.musclebuilding[weekIndex] || [];
     return (
-      <div key={weekArr.indexOf(a)}>
+      <div key={`week-${week}`}>
         <Accordion
           sx={{
             backgroundColor: "white !important",
@@ -83,19 +120,19 @@ export default function Dashboard({ exercises }) {
               className="validate"
               onClick={(e) => {
                 handleCheck(e);
-                setWeekLeft(11 - i);
+                setWeekLeft(11 - weekIndex);
               }}
             />
-            <p>Week {i + 1}</p>
+            <p>Week {weekIndex + 1}</p>
           </AccordionSummary>
           <AccordionDetails>
-            {dayArr.map((e, index) => {
+            {dayArr.map((day, dayIndex) => {
+              const dayExercises = weekExercises[dayIndex] || [];
               return (
                 <Day
-                  key={dayArr.indexOf(e)}
-                  prog={programs.musclebuilding[index]}
-                  exercises={exercises}
-                  index={index}
+                  key={`day-${day}`}
+                  day={day}
+                  exercises={dayExercises}
                 />
               );
             })}
@@ -104,9 +141,11 @@ export default function Dashboard({ exercises }) {
       </div>
     );
   });
-  const progBodyweight = weekArr.map((a, i) => {
+
+  const progBodyweight = weekArr.map((week, weekIndex) => {
+    const weekExercises = programs.bodyweight[weekIndex] || [];
     return (
-      <div key={weekArr.indexOf(a)}>
+      <div key={`week-${week}`}>
         <Accordion
           sx={{
             backgroundColor: "white !important",
@@ -128,19 +167,19 @@ export default function Dashboard({ exercises }) {
               className="validate"
               onClick={(e) => {
                 handleCheck(e);
-                setWeekLeft(11 - i);
+                setWeekLeft(11 - weekIndex);
               }}
             />
-            <p>Week {i + 1}</p>
+            <p>Week {weekIndex + 1}</p>
           </AccordionSummary>
           <AccordionDetails>
-            {dayArr.map((e, index) => {
+            {dayArr.map((day, dayIndex) => {
+              const dayExercises = weekExercises[dayIndex] || [];
               return (
                 <Day
-                  key={dayArr.indexOf(e)}
-                  prog={programs.bodyweight[index]}
-                  exercises={exercises}
-                  index={index}
+                  key={`day-${day}`}
+                  day={day}
+                  exercises={dayExercises}
                 />
               );
             })}
@@ -149,16 +188,6 @@ export default function Dashboard({ exercises }) {
       </div>
     );
   });
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  const nav = useNavigate();
-
-  const handleNav = () => {
-    nav(-1);
-  };
 
   return (
     <>
@@ -234,7 +263,3 @@ export default function Dashboard({ exercises }) {
     </>
   );
 }
-
-Dashboard.propTypes = {
-  exercises: PropTypes.arrayOf(PropTypes.shape).isRequired,
-};

@@ -69,9 +69,9 @@ function Exercise({ name, video, description, category }) {
           )}
           <div id="exercise-description">
             {description && description.length > 0 ? (
-              description.map((e) => (
-                <div id="steps" key={`${name}-step-${e.substring(0, 20)}`}>
-                  <span>{description.indexOf(e) + 1} :</span> <p>{e}</p>
+              description.map((e, index) => (
+                <div id="steps" key={`${name}-step-${index}`}>
+                  <span>{index + 1} :</span> <p>{e}</p>
                 </div>
               ))
             ) : (

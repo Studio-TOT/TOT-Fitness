@@ -5,6 +5,7 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useExercises } from "../context/ExerciseContext";
 import {
   generateBootyPumpProgram,
   generateMuscleBuildingProgram,
@@ -19,13 +20,23 @@ import mb1 from "../assets/mb1.png";
 import fb1 from "../assets/fb1.png";
 import backarrow from "../assets/back-arrow.svg";
 
-export default function Programs({ exercises }) {
+export default function Programs() {
   const { programType } = useParams();
+  const { exercises, isLoading, error, fetchExercises } = useExercises();
   const [program, setProgram] = useState([]);
   const [expandedWeek, setExpandedWeek] = useState(null);
   const nav = useNavigate();
 
   useEffect(() => {
+    // Only fetch exercises if we don't have them yet
+    if (!exercises || exercises.length === 0) {
+      fetchExercises();
+    }
+  }, [exercises, fetchExercises]);
+
+  useEffect(() => {
+    if (!exercises) return;
+
     let generatedProgram;
     switch (programType) {
       case "bootypump":
@@ -43,10 +54,10 @@ export default function Programs({ exercises }) {
       default:
         generatedProgram = [];
     }
-    setProgram(generatedProgram);
+    setProgram(generatedProgram || []);
   }, [programType, exercises]);
 
-  const dayArr = Array.from({ length: program.length }, (v, k) => k + 1);
+  const dayArr = Array.from({ length: 3 }, (v, k) => k + 1);
   const weekArr = Array.from({ length: 12 }, (v, k) => k + 1);
 
   useEffect(() => {
@@ -267,6 +278,14 @@ export default function Programs({ exercises }) {
     return null;
   };
 
+  if (isLoading) {
+    return <div className="loading">Loading program...</div>;
+  }
+
+  if (error) {
+    return <div className="error">Error loading program: {error}</div>;
+  }
+
   return (
     <div className="programs-page">
       <div className="program">
@@ -309,9 +328,8 @@ export default function Programs({ exercises }) {
                   {dayArr.map((day, dayIndex) => (
                     <Day
                       key={`day-${day}`}
-                      prog={program[dayIndex]}
-                      exercises={exercises}
-                      index={dayIndex}
+                      day={day}
+                      exercises={program[index]?.[dayIndex] || []}
                     />
                   ))}
                 </AccordionDetails>
@@ -325,5 +343,11 @@ export default function Programs({ exercises }) {
 }
 
 Programs.propTypes = {
-  exercises: PropTypes.arrayOf(PropTypes.shape).isRequired,
+  exercises: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      muscle: PropTypes.string.isRequired,
+      equipment: PropTypes.string.isRequired,
+    })
+  ),
 };
