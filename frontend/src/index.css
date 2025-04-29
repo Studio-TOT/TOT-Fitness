@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-[#f5f8fa] font-poppins;
+    }
+}
+
+@layer components {
+    .spinner-container {
+        @apply flex justify-center items-center min-h-[200px] w-full;
+    }
+
+    .spinner {
+        @apply w-[50px] h-[50px] relative flex justify-center items-center;
+    }
+
+    .spinner-inner {
+        @apply w-full h-full border-4 border-secondary border-t-primary rounded-full animate-spin box-border;
+    }
+}

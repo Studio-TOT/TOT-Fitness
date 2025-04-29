@@ -6,7 +6,12 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-function Exercise({ name, video, description, category }) {
+function Exercise({ 
+  name, 
+  video = null, 
+  description = [], 
+  category = null 
+}) {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -91,12 +96,6 @@ Exercise.propTypes = {
   video: PropTypes.string,
   description: PropTypes.arrayOf(PropTypes.string),
   category: PropTypes.string,
-};
-
-Exercise.defaultProps = {
-  video: null,
-  description: [],
-  category: null,
 };
 
 export default Exercise;

@@ -3,14 +3,17 @@ import PropTypes from "prop-types";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useExercises } from "../context/ExerciseContext";
 import Exercise from "../components/Exercise";
+import Spinner from "../components/Spinner";
 import imgFilter from "../assets/settings-sliders.png";
 import backarrow from "../assets/back-arrow.svg";
 
 function BodyPartExercises() {
   const { exercises, isLoading, error, fetchExercisesByBodyPart } = useExercises();
-  const [filter, setFilter] = useState("");
+  const [bodyPart, setBodyPart] = useState("");
+  const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
 
   const categories = [
     "Barbell",
@@ -30,19 +33,23 @@ function BodyPartExercises() {
 
   useEffect(() => {
     if (exercise === "Lowerback") {
-      setFilter("Lower back");
+      setBodyPart("Lower back");
     } else if (exercise === "Midback") {
-      setFilter("Mid back");
+      setBodyPart("Mid back");
     } else {
-      setFilter(exercise);
+      setBodyPart(exercise);
     }
   }, [exercise]);
 
   useEffect(() => {
-    if (filter) {
-      fetchExercisesByBodyPart(filter);
+    if (bodyPart) {
+      setLocalLoading(true);
+      fetchExercisesByBodyPart(bodyPart, category)
+        .finally(() => {
+          setLocalLoading(false);
+        });
     }
-  }, [filter, fetchExercisesByBodyPart]);
+  }, [bodyPart, category, fetchExercisesByBodyPart]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -56,10 +63,6 @@ function BodyPartExercises() {
     setFilterOpen(!filterOpen);
   };
 
-  if (isLoading) {
-    return <div className="loading">Loading exercises...</div>;
-  }
-
   if (error) {
     return <div className="error">Error loading exercises: {error}</div>;
   }
@@ -70,7 +73,7 @@ function BodyPartExercises() {
         <Link to="/" onClick={handleNav}>
           <img className="backarrow" src={backarrow} alt="backarrow" />
         </Link>
-        <h2>{filter} exercises</h2>
+        <h2>{bodyPart} exercises</h2>
       </div>
       <div className="filter-search">
         <button type="button" className="btn-filter" onClick={openFilter}>
@@ -85,22 +88,31 @@ function BodyPartExercises() {
         />
       </div>
 
-      {filterOpen && (
-        <div className="filter-options">
-          {categories.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setFilter(category)}
-              className={filter === category ? "active" : ""}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className={filterOpen ? "filters filters-open" : "filters"}>
+        {categories.map((cat) => (
+          <Fragment key={cat}>
+            <input
+              type="checkbox"
+              id={cat}
+              checked={category === cat}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setCategory(cat);
+                } else {
+                  setCategory("");
+                }
+              }}
+            />
+            <label htmlFor={cat}>{cat}</label>
+          </Fragment>
+        ))}
+      </div>
 
-      {exercises.length > 0 ? (
+      {localLoading ? (
+        <div className="spinner-container">
+          <Spinner />
+        </div>
+      ) : exercises.length > 0 ? (
         exercises
           .filter((item) =>
             item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
@@ -119,13 +131,7 @@ function BodyPartExercises() {
           ))
       ) : (
         <div className="error-msg">
-          {isLoading ? (
-            "Loading exercises..."
-          ) : error ? (
-            `Error: ${error}`
-          ) : (
-            "No exercises found for this body part. Please try another selection."
-          )}
+          No exercises found for this body part. Please try another selection.
         </div>
       )}
     </div>

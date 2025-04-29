@@ -37,11 +37,11 @@ export function ExerciseProvider({ children }) {
     }
   }, []);
 
-  const fetchExercisesByBodyPart = useCallback(async (bodyPart) => {
+  const fetchExercisesByBodyPart = useCallback(async (bodyPart, category) => {
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL}/api/exercises/bodypart/${bodyPart}`;
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/exercises/bodypart/${bodyPart}${category ? `?category=${category}` : ''}`;
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -50,15 +50,19 @@ export function ExerciseProvider({ children }) {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.details || `HTTP error! status: ${response.status}`
+        );
       }
       
       const data = await response.json();
       setExercises(data || []);
     } catch (err) {
-      setError(err.message.includes("ECONNREFUSED")
-        ? "Unable to connect to the database. Please try again later."
-        : err.message
+      setError(
+        err.message.includes("ECONNREFUSED")
+          ? "Unable to connect to the database. Please try again later."
+          : err.message
       );
       setExercises([]);
     } finally {

@@ -6,7 +6,7 @@ import prog from "../assets/ecrire.png";
 import exo from "../assets/haltere.png";
 import nut from "../assets/plaque.png";
 
-function Navbar({ isTransparent }) {
+function Navbar({ isTransparent = false }) {
   const [navBackground, setNavBackground] = useState("navbar-desktop-scrolled");
   const handleScroll = () => {
     const currentScrollY = window.scrollY || 0;
@@ -124,7 +124,4 @@ function Navbar({ isTransparent }) {
 export default Navbar;
 Navbar.propTypes = {
   isTransparent: PropTypes.bool,
-};
-Navbar.defaultProps = {
-  isTransparent: false,
 };
