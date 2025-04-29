@@ -312,26 +312,47 @@ export default function Programs() {
                   borderRadius: "16px !important",
                   border: "none",
                   color: "black",
-                  margin: "4px auto 0px auto !important",
+                  margin: "8px auto !important",
                   width: "95%",
                   fontFamily: "Arial !important",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+                  },
                 }}
               >
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
                   aria-controls="panel1a-content"
                   id="panel1a-header"
+                  className="bg-white hover:bg-gray-50 transition-colors duration-200"
                 >
-                  <p>Week {index + 1}</p>
+                  <div className="flex items-center w-full">
+                    <div className="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full mr-3">
+                      <span className="text-sm font-semibold">{index + 1}</span>
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-gray-800">Week {index + 1}</p>
+                      <p className="text-sm text-gray-500">3 days of training</p>
+                    </div>
+                  </div>
                 </AccordionSummary>
-                <AccordionDetails>
-                  {dayArr.map((day, dayIndex) => (
-                    <Day
-                      key={`day-${day}`}
-                      day={day}
-                      exercises={program[index]?.[dayIndex] || []}
-                    />
-                  ))}
+                <AccordionDetails className="p-0">
+                  <div className="p-4 bg-gray-50">
+                    {dayArr.map((day, dayIndex) => (
+                      <div 
+                        key={`day-${day}`}
+                        className="mb-4 last:mb-0"
+                      >
+                        <Day
+                          day={day}
+                          exercises={program[index]?.[dayIndex] || []}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </AccordionDetails>
               </Accordion>
             </div>

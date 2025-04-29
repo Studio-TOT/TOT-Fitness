@@ -1,12 +1,16 @@
 import PropTypes from "prop-types";
 import Exercise from "./Exercise";
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 function Day({ day, exercises = [] }) {
   if (!Array.isArray(exercises)) {
     return (
-      <div className="day">
-        <h3>Day {day}</h3>
-        <div className="exercises">
+      <div className="bg-white rounded-lg p-4 shadow-sm">
+        <div className="flex items-center mb-4">
+          <CalendarTodayIcon className="text-blue-500 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-800">Day {day}</h3>
+        </div>
+        <div className="text-center text-gray-500 py-4">
           <p>No exercises available for this day</p>
         </div>
       </div>
@@ -14,9 +18,12 @@ function Day({ day, exercises = [] }) {
   }
 
   return (
-    <div className="day">
-      <h3>Day {day}</h3>
-      <div className="exercises">
+    <div className="bg-white rounded-lg p-4 shadow-sm">
+      <div className="flex items-center mb-4">
+        <CalendarTodayIcon className="text-blue-500 mr-2" />
+        <h3 className="text-lg font-semibold text-gray-800">Day {day}</h3>
+      </div>
+      <div className="space-y-4">
         {exercises.map((exercise) => (
           <Exercise
             key={exercise?.id}
