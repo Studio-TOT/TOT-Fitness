@@ -1,24 +1,36 @@
+require('dotenv').config();
+
 const { Pool } = require("pg");
 const fs = require("fs");
 const path = require("path");
 
 // Database configuration
-const pool = new Pool({
-    user: "omci",
-    host: "localhost",
-    database: "exercises_db",
-    password: "",
-    port: 5432,
-});
+const pool = new Pool(
+    process.env.DATABASE_URL
+        ? {
+            connectionString: process.env.DATABASE_URL,
+            ssl: {
+                rejectUnauthorized: false // Required for Railway
+            }
+        }
+        : {
+            user: process.env.DB_USER || "omci",
+            host: process.env.DB_HOST || "localhost",
+            database: process.env.DB_NAME || "exercises_db",
+            password: process.env.DB_PASSWORD || "",
+            port: process.env.DB_PORT || 5432,
+        }
+);
 
 // Read the JSON file
 const exercisesData = JSON.parse(
-    fs.readFileSync(path.join(__dirname, "../data/exercises.json"), "utf8")
+    fs.readFileSync(path.join(__dirname, "data", "exercises.json"), "utf8")
 );
 
 async function importExercises() {
     const client = await pool.connect();
     try {
+        console.log('Starting import process...');
         await client.query("BEGIN");
 
         // Import exercises
@@ -232,47 +244,47 @@ async function importExercises() {
             }
 
             // Import images
-            if (exercise.images) {
-                if (exercise.images.male) {
-                    for (const image of exercise.images.male) {
-                        await client.query(
-                            `INSERT INTO exercise_images (
+            if (exercise.images || exercise.male_images || exercise.female_images) {
+                // Handle male images/videos
+                const maleImages = exercise.male_images || exercise.images?.male || [];
+                for (const image of maleImages) {
+                    await client.query(
+                        `INSERT INTO exercise_images (
                 id, exercise_id, gender, order_num, og_image,
                 original_video, unbranded_video, branded_video
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                            [
-                                image.id,
-                                exercise.id,
-                                "male",
-                                image.order,
-                                image.og_image,
-                                image.original_video,
-                                image.unbranded_video,
-                                image.branded_video,
-                            ]
-                        );
-                    }
+                        [
+                            image.id,
+                            exercise.id,
+                            "male",
+                            image.order,
+                            image.og_image,
+                            image.original_video,
+                            image.unbranded_video,
+                            image.branded_video,
+                        ]
+                    );
                 }
 
-                if (exercise.images.female) {
-                    for (const image of exercise.images.female) {
-                        await client.query(
-                            `INSERT INTO exercise_images (
+                // Handle female images/videos
+                const femaleImages = exercise.female_images || exercise.images?.female || [];
+                for (const image of femaleImages) {
+                    await client.query(
+                        `INSERT INTO exercise_images (
                 id, exercise_id, gender, order_num, og_image,
                 original_video, unbranded_video, branded_video
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                            [
-                                image.id,
-                                exercise.id,
-                                "female",
-                                image.order,
-                                image.og_image,
-                                image.original_video,
-                                image.unbranded_video,
-                                image.branded_video,
-                            ]
-                        );
-                    }
+                        [
+                            image.id,
+                            exercise.id,
+                            "female",
+                            image.order,
+                            image.og_image,
+                            image.original_video,
+                            image.unbranded_video,
+                            image.branded_video,
+                        ]
+                    );
                 }
             }
         }

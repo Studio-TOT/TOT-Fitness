@@ -102,7 +102,8 @@ CREATE TABLE exercise_steps (
     exercise_id INTEGER REFERENCES exercises(id),
     order_num INTEGER NOT NULL,
     text TEXT,
-    text_en_us TEXT
+    text_en_us TEXT,
+    UNIQUE (exercise_id, order_num)
 );
 
 CREATE TABLE exercise_images (
@@ -113,7 +114,8 @@ CREATE TABLE exercise_images (
     og_image VARCHAR(255),
     original_video VARCHAR(255),
     unbranded_video VARCHAR(255),
-    branded_video VARCHAR(255)
+    branded_video VARCHAR(255),
+    UNIQUE (exercise_id, gender, order_num)
 );
 
 -- Add indexes for better performance

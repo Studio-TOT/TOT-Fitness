@@ -293,7 +293,9 @@ router.get('/muscle/:muscleName', async (req, res) => {
 router.get('/bodypart/:bodyPart', async (req, res) => {
   try {
     const { bodyPart } = req.params;
-    const result = await pool.query(`
+    const { category } = req.query; // Get category from query parameters
+
+    let query = `
       SELECT 
         e.*,
         json_agg(DISTINCT jsonb_build_object(
@@ -351,9 +353,20 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
       LEFT JOIN mechanics me ON ed.mechanic_id = me.id
       LEFT JOIN exercise_steps s ON e.id = s.exercise_id
       LEFT JOIN exercise_images i ON e.id = i.exercise_id
-      WHERE m.name ILIKE $1 OR m.name_en_us ILIKE $1
-      GROUP BY e.id
-    `, [`%${bodyPart}%`]);
+      WHERE (m.name ILIKE $1 OR m.name_en_us ILIKE $1)
+    `;
+
+    const queryParams = [`%${bodyPart}%`];
+
+    // Add category filter if provided
+    if (category) {
+      query += ` AND (c.name ILIKE $2 OR c.name_en_us ILIKE $2)`;
+      queryParams.push(`%${category}%`);
+    }
+
+    query += ` GROUP BY e.id`;
+
+    const result = await pool.query(query, queryParams);
 
     // Transform the data to match the frontend's expected format
     const exercises = result.rows.map(transformExercise);
