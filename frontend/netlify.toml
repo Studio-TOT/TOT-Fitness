@@ -1,5 +1,5 @@
 [build]
-  command = "rm -rf dist && pnpm run build:prod"
+  command = "rm -rf dist && pnpm run build"
   publish = "dist"
   base = "frontend"
 
@@ -23,6 +23,10 @@
 
 [build.processing.images]
   compress = true
+
+[build.processing.secrets]
+  enabled = true
+  omit_keys = ["VITE_API_URL"]
 
 [[redirects]]
   from = "/api/*"

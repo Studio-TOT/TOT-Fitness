@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --mode development",
-    "build": "vite build",
+    "dev": "vite",
+    "build": "pnpm clean && vite build",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build --mode production",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "fix": "prettier --write . && eslint --fix --ext .jsx .",
     "clean": "rm -rf dist"
