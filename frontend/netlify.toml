@@ -1,14 +1,14 @@
 [build]
-  base = "frontend"
   command = "pnpm run build"
   publish = "dist"
+  base = "frontend"
 
 [build.environment]
   NODE_VERSION = "18"
 
 [[redirects]]
   from = "/api/*"
-  to = "${VITE_API_URL}/api/:splat"
+  to = "/.netlify/functions/api/:splat"
   status = 200
   force = true
 
