@@ -14,9 +14,9 @@ import Dashboard from "./pages/Dashboard";
 import nutrition from "./data";
 import { ExerciseProvider } from "./context/ExerciseContext";
 
-const API_URL = import.meta.env.VITE_API_URL;
-if (!API_URL) {
-  console.error("VITE_API_URL is not set in environment variables");
+// Check if API URL is set
+if (!import.meta.env.VITE_API_URL) {
+  console.error("API URL is not set in environment variables");
 }
 
 function App() {

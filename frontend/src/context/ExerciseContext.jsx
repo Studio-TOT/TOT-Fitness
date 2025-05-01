@@ -7,13 +7,13 @@ export function ExerciseProvider({ children }) {
   const [exercises, setExercises] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   const fetchExercises = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL}/api/exercises`;
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${apiUrl}/api/exercises`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -35,14 +35,13 @@ export function ExerciseProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [apiUrl]);
 
   const fetchExercisesByBodyPart = useCallback(async (bodyPart, category) => {
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL}/api/exercises/bodypart/${bodyPart}${category ? `?category=${category}` : ''}`;
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${apiUrl}/api/exercises/bodypart/${bodyPart}${category ? `?category=${category}` : ''}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +67,7 @@ export function ExerciseProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [apiUrl]);
 
   const getExercisesByMuscle = useCallback((exercises, muscleName) => {
     if (!Array.isArray(exercises)) return [];

@@ -1,5 +1,5 @@
 [build]
-  command = "rm -rf dist && pnpm run build"
+  command = "rm -rf dist && pnpm run build:prod"
   publish = "dist"
   base = "frontend"
 
