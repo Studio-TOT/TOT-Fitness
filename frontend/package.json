@@ -1,10 +1,15 @@
 {
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "node ./node_modules/vite/bin/vite.js",
-    "build": "vite build",
+    "dev": "vite",
+    "build": "pnpm clean && vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "lint": "echo '----- Checking Frontend...' && prettier --debug-check . && eslint --ext .jsx . && echo '----- Done!'",
-    "fix": "prettier --write . && eslint --fix --ext .jsx ."
+    "fix": "prettier --write . && eslint --fix --ext .jsx .",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
