@@ -3,11 +3,19 @@ import PropTypes from 'prop-types';
 
 const ExerciseContext = createContext();
 
+// Get API URL from window.__RUNTIME_CONFIG__ if available, fallback to env var
+const getApiUrl = () => {
+  if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.VITE_API_URL) {
+    return window.__RUNTIME_CONFIG__.VITE_API_URL;
+  }
+  return import.meta.env.VITE_API_URL || '';
+};
+
 export function ExerciseProvider({ children }) {
   const [exercises, setExercises] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = getApiUrl();
 
   const fetchExercises = useCallback(async () => {
     setIsLoading(true);

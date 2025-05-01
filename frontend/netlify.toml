@@ -5,6 +5,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  SECRETS_SCAN_ENABLED = "true"
+  SECRETS_SCAN_OMIT_PATHS = "dist/assets/*"
 
 # Configure build processing
 [build.processing]

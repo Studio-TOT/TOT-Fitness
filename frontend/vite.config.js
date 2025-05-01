@@ -2,9 +2,26 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+// Custom plugin to inject runtime config
+function runtimeConfig() {
+  return {
+    name: 'runtime-config',
+    transformIndexHtml(html) {
+      const runtimeConfig = {
+        VITE_API_URL: process.env.VITE_API_URL || ''
+      };
+      const script = `<script>window.__RUNTIME_CONFIG__ = ${JSON.stringify(runtimeConfig)}</script>`;
+      return html.replace('</head>', `${script}</head>`);
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    runtimeConfig()
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -24,4 +41,5 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000,
   },
+  envPrefix: ["VITE_", "PUBLIC_"],
 });
