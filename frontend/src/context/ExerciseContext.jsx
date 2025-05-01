@@ -8,7 +8,7 @@ const getApiUrl = () => {
   if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.VITE_API_URL) {
     return window.__RUNTIME_CONFIG__.VITE_API_URL;
   }
-  // Fallback to empty string if not available
+  console.error('API URL is not set in environment variables');
   return '';
 };
 
@@ -20,7 +20,7 @@ export function ExerciseProvider({ children }) {
 
   const fetchExercises = useCallback(async () => {
     if (!apiUrl) {
-      setError('API URL not configured');
+      setError('API URL is not configured. Please check your environment variables.');
       return;
     }
 
@@ -53,7 +53,7 @@ export function ExerciseProvider({ children }) {
 
   const fetchExercisesByBodyPart = useCallback(async (bodyPart, category) => {
     if (!apiUrl) {
-      setError('API URL not configured');
+      setError('API URL is not configured. Please check your environment variables.');
       return;
     }
 
