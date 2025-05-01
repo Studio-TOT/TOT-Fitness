@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 
 const ExerciseContext = createContext();
 
-// Get API URL from window.__RUNTIME_CONFIG__ if available, fallback to env var
+// Get API URL from runtime config
 const getApiUrl = () => {
   if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.VITE_API_URL) {
     return window.__RUNTIME_CONFIG__.VITE_API_URL;
   }
-  return import.meta.env.VITE_API_URL || '';
+  // Fallback to empty string if not available
+  return '';
 };
 
 export function ExerciseProvider({ children }) {
@@ -18,6 +19,11 @@ export function ExerciseProvider({ children }) {
   const apiUrl = getApiUrl();
 
   const fetchExercises = useCallback(async () => {
+    if (!apiUrl) {
+      setError('API URL not configured');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -46,6 +52,11 @@ export function ExerciseProvider({ children }) {
   }, [apiUrl]);
 
   const fetchExercisesByBodyPart = useCallback(async (bodyPart, category) => {
+    if (!apiUrl) {
+      setError('API URL not configured');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {

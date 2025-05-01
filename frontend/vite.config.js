@@ -7,8 +7,9 @@ function runtimeConfig() {
   return {
     name: 'runtime-config',
     transformIndexHtml(html) {
+      // Only inject the API URL structure, not the actual value
       const runtimeConfig = {
-        VITE_API_URL: process.env.VITE_API_URL || ''
+        VITE_API_URL: ''  // Empty string as placeholder
       };
       const script = `<script>window.__RUNTIME_CONFIG__ = ${JSON.stringify(runtimeConfig)}</script>`;
       return html.replace('</head>', `${script}</head>`);
@@ -41,5 +42,8 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000,
   },
-  envPrefix: ["VITE_", "PUBLIC_"],
+  define: {
+    // Replace environment variables at build time with empty strings
+    'import.meta.env.VITE_API_URL': JSON.stringify('')
+  }
 });
