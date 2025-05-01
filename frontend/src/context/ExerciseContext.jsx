@@ -12,7 +12,7 @@ export function ExerciseProvider({ children }) {
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = `${process.env.VITE_API_URL}/api/exercises`;
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/exercises`;
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -41,7 +41,7 @@ export function ExerciseProvider({ children }) {
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = `${process.env.VITE_API_URL}/api/exercises/bodypart/${bodyPart}${category ? `?category=${category}` : ''}`;
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/exercises/bodypart/${bodyPart}${category ? `?category=${category}` : ''}`;
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {

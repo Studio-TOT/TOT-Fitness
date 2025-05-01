@@ -27,8 +27,7 @@ export default defineConfig(({ mode }) => {
       },
       chunkSizeWarningLimit: 1000,
     },
-    define: {
-      'process.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || ''),
-    },
+    // Use import.meta.env instead of process.env
+    envPrefix: ['VITE_'],
   };
 });
