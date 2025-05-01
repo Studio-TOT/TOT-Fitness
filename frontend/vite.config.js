@@ -13,7 +13,4 @@ export default defineConfig({
       "@services": path.resolve(__dirname, "src/services"),
     },
   },
-  define: {
-    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL)
-  }
 });
