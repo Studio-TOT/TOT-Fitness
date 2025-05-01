@@ -19,8 +19,9 @@ app.get('/health', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
+  console.error("Error stack:", err.stack);
   res.status(500).json({
     error: "Internal server error",
     details: err.message,

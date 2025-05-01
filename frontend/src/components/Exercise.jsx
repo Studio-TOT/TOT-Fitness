@@ -65,14 +65,14 @@ function Exercise({
               <span className="ml-3 px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
                 {category}
               </span>
-            )}
+          )}
           </div>
         </AccordionSummary>
         <AccordionDetails className="p-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
             {/* Video Section */}
             <div className="relative rounded-lg overflow-hidden bg-gray-100">
-              {video ? (
+          {video ? (
                 <div className="relative aspect-video">
                   <video 
                     controls 
@@ -82,11 +82,11 @@ function Exercise({
                     muted
                     className="w-full h-full object-cover"
                   >
-                    <track default kind="captions" />
-                    {isVisible && <source src={video} type="video/mp4" />}
-                  </video>
+              <track default kind="captions" />
+              {isVisible && <source src={video} type="video/mp4" />}
+            </video>
                 </div>
-              ) : (
+          ) : (
                 <div className="flex flex-col items-center justify-center h-48 text-gray-500">
                   <PlayCircleOutlineIcon className="text-4xl mb-2" />
                   <p>No video available</p>
@@ -101,7 +101,7 @@ function Exercise({
                 <h3 className="text-lg font-semibold text-gray-800">Instructions</h3>
               </div>
               <div className="space-y-3">
-                {description && description.length > 0 ? (
+            {description && description.length > 0 ? (
                   description.map((step, index) => (
                     <div 
                       key={`${name}-step-${index}`}
@@ -111,9 +111,9 @@ function Exercise({
                         {index + 1}
                       </span>
                       <p className="text-gray-700">{step}</p>
-                    </div>
-                  ))
-                ) : (
+                </div>
+              ))
+            ) : (
                   <div className="text-center text-gray-500 py-4">
                     No instructions available
                   </div>

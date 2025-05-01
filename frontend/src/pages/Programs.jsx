@@ -341,17 +341,17 @@ export default function Programs() {
                 </AccordionSummary>
                 <AccordionDetails className="p-0">
                   <div className="p-4 bg-gray-50">
-                    {dayArr.map((day, dayIndex) => (
+                  {dayArr.map((day, dayIndex) => (
                       <div 
                         key={`day-${day}`}
                         className="mb-4 last:mb-0"
                       >
-                        <Day
-                          day={day}
+                    <Day
+                      day={day}
                           exercises={program[index]?.[dayIndex] || []}
-                        />
+                    />
                       </div>
-                    ))}
+                  ))}
                   </div>
                 </AccordionDetails>
               </Accordion>

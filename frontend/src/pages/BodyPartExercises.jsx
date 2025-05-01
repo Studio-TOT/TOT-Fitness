@@ -105,7 +105,7 @@ function BodyPartExercises() {
             />
             <label htmlFor={cat}>{cat}</label>
           </Fragment>
-        ))}
+          ))}
       </div>
 
       {localLoading ? (

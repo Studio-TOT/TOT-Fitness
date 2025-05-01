@@ -92,27 +92,27 @@ async function copyData() {
 
         for (const muscle of muscles.rows) {
             try {
-                await railwayClient.query(
-                    `INSERT INTO muscles (
-                        id, name, name_en_us, scientific_name, url_name,
-                        description, description_en_us, lft, rght, tree_id, level, parent
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                    ON CONFLICT (id) DO NOTHING`,
-                    [
-                        muscle.id,
-                        muscle.name,
-                        muscle.name_en_us,
-                        muscle.scientific_name,
-                        muscle.url_name,
-                        muscle.description,
-                        muscle.description_en_us,
-                        muscle.lft,
-                        muscle.rght,
-                        muscle.tree_id,
-                        muscle.level,
+            await railwayClient.query(
+                `INSERT INTO muscles (
+                    id, name, name_en_us, scientific_name, url_name,
+                    description, description_en_us, lft, rght, tree_id, level, parent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (id) DO NOTHING`,
+                [
+                    muscle.id,
+                    muscle.name,
+                    muscle.name_en_us,
+                    muscle.scientific_name,
+                    muscle.url_name,
+                    muscle.description,
+                    muscle.description_en_us,
+                    muscle.lft,
+                    muscle.rght,
+                    muscle.tree_id,
+                    muscle.level,
                         muscle.parent
-                    ]
-                );
+                ]
+            );
             } catch (error) {
                 console.error('Error copying muscle:', muscle.id, error.message);
                 throw error;
