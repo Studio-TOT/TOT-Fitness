@@ -5,8 +5,13 @@ const ExerciseContext = createContext();
 
 // Get API URL from runtime config
 const getApiUrl = () => {
+  // First try to get from runtime config
   if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.VITE_API_URL) {
     return window.__RUNTIME_CONFIG__.VITE_API_URL;
+  }
+  // Then try to get from import.meta.env
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
   console.error('API URL is not set in environment variables');
   return '';
