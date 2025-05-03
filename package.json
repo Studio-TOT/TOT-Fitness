@@ -26,12 +26,12 @@
   "devDependencies": {
     "concurrently": "^7.6.0",
     "cross-env": "^7.0.3",
-    "eslint-import-resolver-webpack": "^0.13.2"
+    "eslint-import-resolver-webpack": "^0.13.10"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "react-spinners": "^0.13.8",
-    "sass": "^1.62.0",
-    "swiper": "^9.2.4"
+    "sass": "^1.87.0",
+    "swiper": "^9.4.1"
   }
 }
