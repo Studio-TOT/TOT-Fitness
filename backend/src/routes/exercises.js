@@ -8,14 +8,23 @@ const getDatabaseConfig = () => {
     // In production, always use DATABASE_URL if available
     if (process.env.DATABASE_URL) {
       console.log('Production: Using DATABASE_URL for connection');
+      console.log('DATABASE_URL format:', process.env.DATABASE_URL.substring(0, 20) + '...');
       return {
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false }
       };
     }
 
-    // Fallback to individual PG variables if DATABASE_URL is not available
-    console.log('Production: DATABASE_URL not found, falling back to PG variables');
+    // Fallback to individual DB variables if DATABASE_URL is not available
+    console.log('Production: DATABASE_URL not found, falling back to DB variables');
+    console.log('DB variables:', {
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      port: process.env.DB_PORT,
+      password: process.env.DB_PASSWORD ? '****' : undefined
+    });
+
     return {
       host: process.env.DB_HOST,
       database: process.env.DB_NAME,
@@ -49,7 +58,7 @@ const getDatabaseConfig = () => {
 
 // Get database configuration
 const dbConfig = getDatabaseConfig();
-console.log('Database configuration:', {
+console.log('Final database configuration:', {
   ...dbConfig,
   password: dbConfig.password ? '****' : undefined,
   connectionString: dbConfig.connectionString ? '****' : undefined
