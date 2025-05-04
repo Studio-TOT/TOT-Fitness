@@ -5,7 +5,13 @@ const cors = require('cors');
 const exercisesRouter = require('./src/routes/exercises');
 
 // Environment variables validation
-const requiredEnvVars = ['NODE_ENV', 'DATABASE_URL'];
+const requiredEnvVars = ['NODE_ENV'];
+if (process.env.NODE_ENV === 'production') {
+  requiredEnvVars.push('DATABASE_URL');
+} else {
+  requiredEnvVars.push('LOCAL_DATABASE_URL');
+}
+
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {

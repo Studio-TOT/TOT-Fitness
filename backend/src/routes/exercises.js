@@ -5,8 +5,10 @@ const { Pool } = require('pg');
 // Get the appropriate database URL based on environment
 const getDatabaseUrl = () => {
   if (process.env.NODE_ENV === 'production') {
+    // In production, use Railway's DATABASE_URL
     return process.env.DATABASE_URL;
   }
+  // In development, use local database URL
   return process.env.LOCAL_DATABASE_URL;
 };
 
@@ -21,8 +23,7 @@ const pool = new Pool(
     ? {
       connectionString: getDatabaseUrl(),
       ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: false,
-        sslmode: 'require'
+        rejectUnauthorized: false
       } : false
     }
     : {
