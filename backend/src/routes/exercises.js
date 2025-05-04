@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 // Get the appropriate database URL based on environment
 const getDatabaseUrl = () => {
   if (process.env.NODE_ENV === 'production') {
-    return process.env.RAILWAY_DATABASE_URL;
+    return process.env.DATABASE_URL;
   }
   return process.env.LOCAL_DATABASE_URL;
 };
