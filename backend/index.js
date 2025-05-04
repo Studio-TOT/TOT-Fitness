@@ -12,24 +12,11 @@ console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 console.log('DATABASE_URL format:', process.env.DATABASE_URL ?
   process.env.DATABASE_URL.replace('${{Postgres.DATABASE_URL}}', '***') :
   'Not set');
-console.log('PGHOST:', process.env.PGHOST);
-console.log('PGDATABASE:', process.env.PGDATABASE);
-console.log('PGUSER:', process.env.PGUSER);
-console.log('PGPASSWORD exists:', !!process.env.PGPASSWORD);
-console.log('PGPORT:', process.env.PGPORT);
 
 // Environment variables validation
 if (process.env.NODE_ENV === 'production') {
-  // In production, we need either DATABASE_URL or all PG_* variables
-  const hasDatabaseUrl = !!process.env.DATABASE_URL;
-  const hasIndividualVars = !!(process.env.PGHOST && process.env.PGDATABASE && process.env.PGUSER && process.env.PGPASSWORD);
-
-  if (!hasDatabaseUrl && !hasIndividualVars) {
-    console.error('Missing database configuration in production. Please set either:');
-    console.error('1. DATABASE_URL environment variable (with Railway variable reference), or');
-    console.error('2. All of these variables: PGHOST, PGDATABASE, PGUSER, PGPASSWORD');
-    console.error('Current environment variables:');
-    console.error(JSON.stringify(process.env, null, 2));
+  if (!process.env.DATABASE_URL) {
+    console.error('Missing DATABASE_URL in production environment');
     process.exit(1);
   }
 } else {

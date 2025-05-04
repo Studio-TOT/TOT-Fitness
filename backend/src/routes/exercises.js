@@ -5,48 +5,15 @@ const { Pool } = require('pg');
 // Get the appropriate database configuration based on environment
 const getDatabaseConfig = () => {
   if (process.env.NODE_ENV === 'production') {
-    // In production, try to use DATABASE_URL first
+    // In production, use DATABASE_URL
     if (process.env.DATABASE_URL) {
       console.log('Production: Using DATABASE_URL for connection');
-      // Handle Railway's variable reference syntax
-      const dbUrl = process.env.DATABASE_URL.replace('${{Postgres.DATABASE_URL}}', process.env.DATABASE_URL);
-      console.log('DATABASE_URL format:', dbUrl.substring(0, 20) + '...');
       return {
-        connectionString: dbUrl,
+        connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false }
       };
     }
-
-    // If DATABASE_URL is not available, try to construct it from individual variables
-    if (process.env.PGHOST && process.env.PGDATABASE && process.env.PGUSER && process.env.PGPASSWORD) {
-      const port = process.env.PGPORT || 5432;
-      const connectionString = `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}`;
-      console.log('Production: Constructed DATABASE_URL from individual variables');
-      console.log('Connection string format:', connectionString.substring(0, 20) + '...');
-      return {
-        connectionString,
-        ssl: { rejectUnauthorized: false }
-      };
-    }
-
-    // Fallback to individual variables if we can't construct the URL
-    console.log('Production: Using individual DB variables for connection');
-    console.log('DB variables:', {
-      host: process.env.PGHOST,
-      database: process.env.PGDATABASE,
-      user: process.env.PGUSER,
-      port: process.env.PGPORT,
-      password: process.env.PGPASSWORD ? '****' : undefined
-    });
-
-    return {
-      host: process.env.PGHOST,
-      database: process.env.PGDATABASE,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      port: process.env.PGPORT || 5432,
-      ssl: { rejectUnauthorized: false }
-    };
+    throw new Error('DATABASE_URL is required in production');
   }
 
   // In development, use local database configuration
