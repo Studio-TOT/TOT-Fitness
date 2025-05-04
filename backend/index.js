@@ -5,13 +5,17 @@ const cors = require('cors');
 const exercisesRouter = require('./src/routes/exercises');
 
 // Environment variables validation
-const requiredEnvVars = ['NODE_ENV'];
+const requiredEnvVars = ['NODE_ENV', 'DATABASE_URL'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.error('Missing required environment variables:', missingEnvVars.join(', '));
   process.exit(1);
 }
+
+// Log environment info
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
 
 const app = express();
 const port = process.env.PORT || 3000;

@@ -7,7 +7,7 @@
     "dev": "cross-env NODE_ENV=development node ./node_modules/nodemon/bin/nodemon.js index.js",
     "dev:prod": "cross-env NODE_ENV=production node ./node_modules/nodemon/bin/nodemon.js index.js",
     "migrate": "node migrate.js",
-    "start": "node index.js",
+    "start": "cross-env NODE_ENV=production node index.js",
     "lint": "echo '----- Checking Backend...' && npx prettier --debug-check . && eslint --ext .js . && echo '----- Done!'",
     "fix": "prettier --write . && eslint --fix --ext .js .",
     "scrape": "node src/scraper.js"
