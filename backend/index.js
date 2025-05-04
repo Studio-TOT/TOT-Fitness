@@ -26,8 +26,17 @@ console.log('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Simple CORS configuration
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://tot-fitness.netlify.app', 'https://tot-fitness-production.up.railway.app']
+    : 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 

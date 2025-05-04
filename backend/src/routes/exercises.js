@@ -6,22 +6,26 @@ const { Pool } = require('pg');
 const getDatabaseUrl = () => {
   if (process.env.NODE_ENV === 'production') {
     // In production, use Railway's DATABASE_URL
-    return process.env.DATABASE_URL;
+    const dbUrl = process.env.DATABASE_URL;
+    console.log('Production environment detected');
+    console.log('Database URL format:', dbUrl ? 'postgresql://' : 'Not set');
+    return dbUrl;
   }
   // In development, use local database URL
   return process.env.LOCAL_DATABASE_URL;
 };
 
 // Log the database URL (without the password)
-console.log('Database URL:', getDatabaseUrl() ?
-  getDatabaseUrl().replace(/:[^:@]+@/, ':****@') :
+const dbUrl = getDatabaseUrl();
+console.log('Database URL:', dbUrl ?
+  dbUrl.replace(/:[^:@]+@/, ':****@') :
   'Not set');
 
 // Use DATABASE_URL if available, otherwise use individual connection parameters
 const pool = new Pool(
-  getDatabaseUrl()
+  dbUrl
     ? {
-      connectionString: getDatabaseUrl(),
+      connectionString: dbUrl,
       ssl: process.env.NODE_ENV === 'production' ? {
         rejectUnauthorized: false
       } : false
@@ -37,8 +41,26 @@ const pool = new Pool(
 
 // Test the database connection
 pool.connect()
-  .then(() => console.log('Successfully connected to the database'))
-  .catch(err => console.error('Error connecting to the database:', err));
+  .then(() => {
+    console.log('Successfully connected to the database');
+    console.log('Connection configuration:', {
+      host: pool.options.host || 'from connection string',
+      port: pool.options.port || 'from connection string',
+      database: pool.options.database || 'from connection string',
+      user: pool.options.user || 'from connection string',
+      ssl: pool.options.ssl ? 'enabled' : 'disabled'
+    });
+  })
+  .catch(err => {
+    console.error('Error connecting to the database:', err);
+    console.error('Connection details:', {
+      host: pool.options.host || 'from connection string',
+      port: pool.options.port || 'from connection string',
+      database: pool.options.database || 'from connection string',
+      user: pool.options.user || 'from connection string',
+      ssl: pool.options.ssl ? 'enabled' : 'disabled'
+    });
+  });
 
 // Transform exercise data to match frontend format
 const transformExercise = (exercise) => {
@@ -108,7 +130,7 @@ const transformExercise = (exercise) => {
 router.get('/', async (req, res) => {
   try {
     console.log('Attempting to fetch exercises from database...');
-    console.log('Using database connection:', getDatabaseUrl() ? 'DATABASE_URL' : 'Individual parameters');
+    console.log('Using database connection:', dbUrl ? 'DATABASE_URL' : 'Individual parameters');
 
     const result = await pool.query(`
       SELECT 
