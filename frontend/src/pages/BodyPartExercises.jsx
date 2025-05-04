@@ -8,7 +8,7 @@ import imgFilter from "../assets/settings-sliders.png";
 import backarrow from "../assets/back-arrow.svg";
 
 function BodyPartExercises() {
-  const { exercises, isLoading, error, fetchExercisesByBodyPart } = useExercises();
+  const { exercises, isLoading, fetchExercisesByBodyPart } = useExercises();
   const [bodyPart, setBodyPart] = useState("");
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
@@ -63,77 +63,102 @@ function BodyPartExercises() {
     setFilterOpen(!filterOpen);
   };
 
-  if (error) {
-    return <div className="error">Error loading exercises: {error}</div>;
-  }
+  const filteredExercises = exercises.filter((item) =>
+    item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="body-part-exercises">
-      <div className="arrow-title">
-        <Link to="/" onClick={handleNav}>
-          <img className="backarrow" src={backarrow} alt="backarrow" />
-        </Link>
-        <h2>{bodyPart} exercises</h2>
-      </div>
-      <div className="filter-search">
-        <button type="button" className="btn-filter" onClick={openFilter}>
-          <img src={imgFilter} alt="" /> <span>Filters</span>
-        </button>
-        <input
-          className="searchbar"
-          type="text"
-          onChange={(e) => setSearch(e.target.value)}
-          value={search}
-          placeholder="Search your exercise"
-        />
-      </div>
-
-      <div className={filterOpen ? "filters filters-open" : "filters"}>
-        {categories.map((cat) => (
-          <Fragment key={cat}>
+    <div className="min-h-screen bg-gray-50 pt-16">
+      <div className="sticky top-16 z-10 bg-white shadow-sm">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-4">
+            <Link to="/" onClick={handleNav} className="flex items-center">
+              <img className="w-6 h-6" src={backarrow} alt="backarrow" />
+            </Link>
+            <h2 className="text-2xl font-semibold text-gray-800">{bodyPart} exercises</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              onClick={openFilter}
+            >
+              <img src={imgFilter} alt="" className="w-5 h-5" />
+              <span>Filters</span>
+            </button>
             <input
-              type="checkbox"
-              id={cat}
-              checked={category === cat}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setCategory(cat);
-                } else {
-                  setCategory("");
-                }
-              }}
+              className="w-64 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              type="text"
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
+              placeholder="Search your exercise"
             />
-            <label htmlFor={cat}>{cat}</label>
-          </Fragment>
-          ))}
+          </div>
+        </div>
+
+        <div className={`p-4 bg-white border-t ${filterOpen ? 'block' : 'hidden'}`}>
+          <div className="flex flex-wrap gap-4">
+            {categories.map((cat) => (
+              <Fragment key={cat}>
+                <input
+                  type="checkbox"
+                  id={cat}
+                  checked={category === cat}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setCategory(cat);
+                    } else {
+                      setCategory("");
+                    }
+                  }}
+                  className="hidden"
+                />
+                <label
+                  htmlFor={cat}
+                  className={`px-4 py-2 rounded-lg cursor-pointer ${
+                    category === cat
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat}
+                </label>
+              </Fragment>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {localLoading ? (
-        <div className="spinner-container">
-          <Spinner />
-        </div>
-      ) : exercises.length > 0 ? (
-        exercises
-          .filter((item) =>
-            item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
-          )
-          .map((e) => (
-            <Exercise
-              key={e.id}
-              name={e.exercise_name}
-              video={
-                e.images?.male?.[0]?.branded_video ||
-                e.images?.female?.[0]?.branded_video
-              }
-              description={e.steps}
-              category={e.category}
-            />
-          ))
-      ) : (
-        <div className="error-msg">
-          No exercises found for this body part. Please try another selection.
-        </div>
-      )}
+      <div className="p-4">
+        {localLoading ? (
+          <div className="flex justify-center items-center min-h-[300px]">
+            <Spinner />
+          </div>
+        ) : filteredExercises.length > 0 ? (
+          <div className="space-y-4">
+            {filteredExercises.map((e) => (
+              <Exercise
+                key={e.id}
+                name={e.exercise_name}
+                video={
+                  e.images?.male?.[0]?.branded_video ||
+                  e.images?.female?.[0]?.branded_video
+                }
+                description={e.steps}
+                category={e.category}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex justify-center items-center min-h-[300px] p-8 bg-white rounded-lg shadow-sm">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">No Exercises Found</h3>
+              <p className="text-gray-600 mb-1">We couldn't find any exercises for {bodyPart}.</p>
+              <p className="text-gray-600">Try selecting a different body part or category.</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

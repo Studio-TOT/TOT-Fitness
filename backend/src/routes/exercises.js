@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 // Get the appropriate database URL based on environment
 const getDatabaseUrl = () => {
   if (process.env.NODE_ENV === 'production') {
-    return process.env.DATABASE_URL;
+    return process.env.RAILWAY_DATABASE_URL;
   }
   return process.env.LOCAL_DATABASE_URL;
 };
@@ -41,38 +41,44 @@ pool.connect()
 
 // Transform exercise data to match frontend format
 const transformExercise = (exercise) => {
-  const primaryMuscles = exercise.muscles
-    .filter(m => m.is_primary)
+  // Ensure arrays exist before filtering
+  const muscles = exercise.muscles || [];
+  const categories = exercise.categories || [];
+  const steps = exercise.steps || [];
+  const images = exercise.images || [];
+
+  const primaryMuscles = muscles
+    .filter(m => m && m.is_primary)
     .map(m => m.name);
 
-  const secondaryMuscles = exercise.muscles
-    .filter(m => m.is_secondary)
+  const secondaryMuscles = muscles
+    .filter(m => m && m.is_secondary)
     .map(m => m.name);
 
-  const tertiaryMuscles = exercise.muscles
-    .filter(m => m.is_tertiary)
+  const tertiaryMuscles = muscles
+    .filter(m => m && m.is_tertiary)
     .map(m => m.name);
 
-  const primaryCategory = exercise.categories
-    .filter(c => c.is_primary)
+  const primaryCategory = categories
+    .filter(c => c && c.is_primary)
     .map(c => c.name)[0];
 
-  const equipment = exercise.categories
-    .filter(c => !c.is_primary)
+  const equipment = categories
+    .filter(c => c && !c.is_primary)
     .map(c => c.name);
 
   // Filter out null values from steps and sort by order
-  const steps = exercise.steps
+  const validSteps = steps
     .filter(s => s && s.text) // Filter out null or undefined steps
     .sort((a, b) => a.order - b.order)
     .map(s => s.text);
 
   // Filter out null values from images and sort by order
-  const maleImages = exercise.images
+  const maleImages = images
     .filter(i => i && i.gender === 'male' && i.branded_video)
     .sort((a, b) => a.order - b.order);
 
-  const femaleImages = exercise.images
+  const femaleImages = images
     .filter(i => i && i.gender === 'female' && i.branded_video)
     .sort((a, b) => a.order - b.order);
 
@@ -89,7 +95,7 @@ const transformExercise = (exercise) => {
     difficulty: exercise.difficulty?.[0]?.name,
     force: exercise.force?.[0]?.name,
     mechanic: exercise.mechanic?.[0]?.name,
-    steps: steps.length > 0 ? steps : [null], // Return [null] if no steps
+    steps: validSteps.length > 0 ? validSteps : [null], // Return [null] if no steps
     images: {
       male: maleImages,
       female: femaleImages
@@ -293,7 +299,9 @@ router.get('/muscle/:muscleName', async (req, res) => {
 router.get('/bodypart/:bodyPart', async (req, res) => {
   try {
     const { bodyPart } = req.params;
-    const { category } = req.query; // Get category from query parameters
+    const { category } = req.query;
+
+    console.log(`Fetching exercises for body part: ${bodyPart}${category ? ` and category: ${category}` : ''}`);
 
     let query = `
       SELECT 
@@ -305,34 +313,34 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
           'is_primary', em.is_primary,
           'is_secondary', em.is_secondary,
           'is_tertiary', em.is_tertiary
-        )) as muscles,
+        )) FILTER (WHERE m.id IS NOT NULL) as muscles,
         json_agg(DISTINCT jsonb_build_object(
           'id', c.id,
           'name', c.name,
           'name_en_us', c.name_en_us,
           'is_primary', ec.is_primary
-        )) as categories,
+        )) FILTER (WHERE c.id IS NOT NULL) as categories,
         json_agg(DISTINCT jsonb_build_object(
           'id', d.id,
           'name', d.name,
           'name_en_us', d.name_en_us
-        )) as difficulty,
+        )) FILTER (WHERE d.id IS NOT NULL) as difficulty,
         json_agg(DISTINCT jsonb_build_object(
           'id', f.id,
           'name', f.name,
           'name_en_us', f.name_en_us
-        )) as force,
+        )) FILTER (WHERE f.id IS NOT NULL) as force,
         json_agg(DISTINCT jsonb_build_object(
           'id', me.id,
           'name', me.name,
           'name_en_us', me.name_en_us
-        )) as mechanic,
+        )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
         json_agg(DISTINCT jsonb_build_object(
           'id', s.id,
           'order', s.order_num,
           'text', s.text,
           'text_en_us', s.text_en_us
-        )) as steps,
+        )) FILTER (WHERE s.id IS NOT NULL) as steps,
         json_agg(DISTINCT jsonb_build_object(
           'id', i.id,
           'gender', i.gender,
@@ -341,7 +349,7 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
           'original_video', i.original_video,
           'unbranded_video', i.unbranded_video,
           'branded_video', i.branded_video
-        )) as images
+        )) FILTER (WHERE i.id IS NOT NULL) as images
       FROM exercises e
       LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
       LEFT JOIN muscles m ON em.muscle_id = m.id
@@ -358,7 +366,6 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
 
     const queryParams = [`%${bodyPart}%`];
 
-    // Add category filter if provided
     if (category) {
       query += ` AND (c.name ILIKE $2 OR c.name_en_us ILIKE $2)`;
       queryParams.push(`%${category}%`);
@@ -366,15 +373,27 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
 
     query += ` GROUP BY e.id`;
 
+    console.log('Executing query with params:', queryParams);
     const result = await pool.query(query, queryParams);
+    console.log(`Found ${result.rows.length} exercises`);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'No exercises found',
+        details: `No exercises found for body part: ${bodyPart}${category ? ` and category: ${category}` : ''}`
+      });
+    }
 
     // Transform the data to match the frontend's expected format
     const exercises = result.rows.map(transformExercise);
-
     res.json(exercises);
   } catch (error) {
     console.error('Error fetching exercises by body part:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

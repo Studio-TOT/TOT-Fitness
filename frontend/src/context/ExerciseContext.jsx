@@ -5,16 +5,12 @@ const ExerciseContext = createContext();
 
 // Get API URL from runtime config
 const getApiUrl = () => {
-  // First try to get from runtime config
-  if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__?.VITE_API_URL) {
-    return window.__RUNTIME_CONFIG__.VITE_API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (!apiUrl) {
+    console.error('API URL is not set in environment variables');
+    return '';
   }
-  // Then try to get from import.meta.env
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  console.error('API URL is not set in environment variables');
-  return '';
+  return apiUrl;
 };
 
 export function ExerciseProvider({ children }) {
@@ -74,6 +70,11 @@ export function ExerciseProvider({ children }) {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 404) {
+          // No exercises found is not an error, just an empty array
+          setExercises([]);
+          return;
+        }
         throw new Error(
           errorData.details || `HTTP error! status: ${response.status}`
         );
