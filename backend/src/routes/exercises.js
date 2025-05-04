@@ -5,32 +5,46 @@ const { Pool } = require('pg');
 // Get the appropriate database configuration based on environment
 const getDatabaseConfig = () => {
   if (process.env.NODE_ENV === 'production') {
-    // In production, always use DATABASE_URL if available
+    // In production, try to use DATABASE_URL first
     if (process.env.DATABASE_URL) {
       console.log('Production: Using DATABASE_URL for connection');
-      console.log('DATABASE_URL format:', process.env.DATABASE_URL.substring(0, 20) + '...');
+      // Handle Railway's variable reference syntax
+      const dbUrl = process.env.DATABASE_URL.replace('${{Postgres.DATABASE_URL}}', process.env.DATABASE_URL);
+      console.log('DATABASE_URL format:', dbUrl.substring(0, 20) + '...');
       return {
-        connectionString: process.env.DATABASE_URL,
+        connectionString: dbUrl,
         ssl: { rejectUnauthorized: false }
       };
     }
 
-    // Fallback to individual DB variables if DATABASE_URL is not available
-    console.log('Production: DATABASE_URL not found, falling back to DB variables');
+    // If DATABASE_URL is not available, try to construct it from individual variables
+    if (process.env.PGHOST && process.env.PGDATABASE && process.env.PGUSER && process.env.PGPASSWORD) {
+      const port = process.env.PGPORT || 5432;
+      const connectionString = `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}`;
+      console.log('Production: Constructed DATABASE_URL from individual variables');
+      console.log('Connection string format:', connectionString.substring(0, 20) + '...');
+      return {
+        connectionString,
+        ssl: { rejectUnauthorized: false }
+      };
+    }
+
+    // Fallback to individual variables if we can't construct the URL
+    console.log('Production: Using individual DB variables for connection');
     console.log('DB variables:', {
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      port: process.env.DB_PORT,
-      password: process.env.DB_PASSWORD ? '****' : undefined
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASE,
+      user: process.env.PGUSER,
+      port: process.env.PGPORT,
+      password: process.env.PGPASSWORD ? '****' : undefined
     });
 
     return {
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      port: process.env.DB_PORT || 5432,
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASE,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT || 5432,
       ssl: { rejectUnauthorized: false }
     };
   }
