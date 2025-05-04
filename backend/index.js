@@ -4,19 +4,34 @@ const express = require('express');
 const cors = require('cors');
 const exercisesRouter = require('./src/routes/exercises');
 
+// Log all environment variables (excluding sensitive ones)
+console.log('Environment Variables:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+console.log('DB_HOST exists:', !!process.env.DB_HOST);
+console.log('DB_NAME exists:', !!process.env.DB_NAME);
+console.log('DB_USER exists:', !!process.env.DB_USER);
+console.log('DB_PASSWORD exists:', !!process.env.DB_PASSWORD);
+console.log('DB_PORT exists:', !!process.env.DB_PORT);
+
 // Environment variables validation
-const requiredEnvVars = ['NODE_ENV'];
 if (process.env.NODE_ENV === 'production') {
-  requiredEnvVars.push('DATABASE_URL');
+  // In production, we need either DATABASE_URL or all DB_* variables
+  if (!process.env.DATABASE_URL && !(process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER && process.env.DB_PASSWORD)) {
+    console.error('Missing database configuration in production. Please set either:');
+    console.error('1. DATABASE_URL environment variable, or');
+    console.error('2. All of these variables: DB_HOST, DB_NAME, DB_USER, DB_PASSWORD');
+    process.exit(1);
+  }
 } else {
-  requiredEnvVars.push('LOCAL_DATABASE_URL');
-}
-
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-
-if (missingEnvVars.length > 0) {
-  console.error('Missing required environment variables:', missingEnvVars.join(', '));
-  process.exit(1);
+  // In development, we need either LOCAL_DATABASE_URL or all DB_* variables
+  if (!process.env.LOCAL_DATABASE_URL && !(process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER)) {
+    console.error('Missing database configuration in development. Please set either:');
+    console.error('1. LOCAL_DATABASE_URL environment variable, or');
+    console.error('2. All of these variables: DB_HOST, DB_NAME, DB_USER');
+    process.exit(1);
+  }
 }
 
 // Log environment info

@@ -2,42 +2,61 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 
-// Get the appropriate database URL based on environment
-const getDatabaseUrl = () => {
+// Get the appropriate database configuration based on environment
+const getDatabaseConfig = () => {
   if (process.env.NODE_ENV === 'production') {
-    // In production, use Railway's DATABASE_URL
-    const dbUrl = process.env.DATABASE_URL;
-    console.log('Production environment detected');
-    console.log('Database URL format:', dbUrl ? 'postgresql://' : 'Not set');
-    return dbUrl;
-  }
-  // In development, use local database URL
-  return process.env.LOCAL_DATABASE_URL;
-};
-
-// Log the database URL (without the password)
-const dbUrl = getDatabaseUrl();
-console.log('Database URL:', dbUrl ?
-  dbUrl.replace(/:[^:@]+@/, ':****@') :
-  'Not set');
-
-// Use DATABASE_URL if available, otherwise use individual connection parameters
-const pool = new Pool(
-  dbUrl
-    ? {
-      connectionString: dbUrl,
-      ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: false
-      } : false
+    // In production, always use DATABASE_URL if available
+    if (process.env.DATABASE_URL) {
+      console.log('Production: Using DATABASE_URL for connection');
+      return {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      };
     }
-    : {
-      user: process.env.DB_USER,
+
+    // Fallback to individual PG variables if DATABASE_URL is not available
+    console.log('Production: DATABASE_URL not found, falling back to PG variables');
+    return {
       host: process.env.DB_HOST,
       database: process.env.DB_NAME,
+      user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       port: process.env.DB_PORT || 5432,
-    }
-);
+      ssl: { rejectUnauthorized: false }
+    };
+  }
+
+  // In development, use local database configuration
+  if (process.env.LOCAL_DATABASE_URL) {
+    console.log('Development: Using LOCAL_DATABASE_URL for connection');
+    return {
+      connectionString: process.env.LOCAL_DATABASE_URL,
+      ssl: false
+    };
+  }
+
+  // Fallback to individual parameters for local development
+  console.log('Development: Using individual parameters for connection');
+  return {
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 5432,
+    ssl: false
+  };
+};
+
+// Get database configuration
+const dbConfig = getDatabaseConfig();
+console.log('Database configuration:', {
+  ...dbConfig,
+  password: dbConfig.password ? '****' : undefined,
+  connectionString: dbConfig.connectionString ? '****' : undefined
+});
+
+// Create the connection pool
+const pool = new Pool(dbConfig);
 
 // Test the database connection
 pool.connect()
@@ -130,7 +149,7 @@ const transformExercise = (exercise) => {
 router.get('/', async (req, res) => {
   try {
     console.log('Attempting to fetch exercises from database...');
-    console.log('Using database connection:', dbUrl ? 'DATABASE_URL' : 'Individual parameters');
+    console.log('Using database connection:', dbConfig.connectionString ? 'DATABASE_URL' : 'Individual parameters');
 
     const result = await pool.query(`
       SELECT 
