@@ -10,7 +10,7 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT);
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 console.log('DATABASE_URL format:', process.env.DATABASE_URL ?
-  process.env.DATABASE_URL.substring(0, 20) + '...' :
+  (process.env.DATABASE_URL.includes('${{') ? 'Using Railway variable reference' : process.env.DATABASE_URL.substring(0, 20) + '...') :
   'Not set');
 
 // Environment variables validation
@@ -23,6 +23,9 @@ if (process.env.NODE_ENV === 'production') {
     console.error('2. Selecting your backend service');
     console.error('3. Going to the Variables tab');
     console.error('4. Adding DATABASE_URL with the value from your PostgreSQL service');
+    console.error('5. Make sure to use the variable reference: ${{Postgres.DATABASE_URL}}');
+  } else if (process.env.DATABASE_URL.includes('${{')) {
+    console.log('Using Railway variable reference for DATABASE_URL');
   }
 } else {
   // In development, we need either LOCAL_DATABASE_URL or all DB_* variables
