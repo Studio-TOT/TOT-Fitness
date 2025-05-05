@@ -9,23 +9,20 @@ console.log('Environment Variables:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT);
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-console.log('DATABASE_URL format:', process.env.DATABASE_URL ?
-  (process.env.DATABASE_URL.includes('${{') ? 'Using Railway variable reference' : process.env.DATABASE_URL.substring(0, 20) + '...') :
-  'Not set');
+console.log('RAILWAY_DATABASE_URL exists:', !!process.env.RAILWAY_DATABASE_URL);
+console.log('Available environment variables:', Object.keys(process.env).join(', '));
 
 // Environment variables validation
 if (process.env.NODE_ENV === 'production') {
-  if (!process.env.DATABASE_URL) {
-    console.error('WARNING: DATABASE_URL is not set in production environment');
+  const dbUrl = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL;
+  if (!dbUrl) {
+    console.error('WARNING: No database URL found in production environment');
     console.error('Please make sure to set DATABASE_URL in your Railway environment variables');
     console.error('You can do this by:');
     console.error('1. Going to your Railway project dashboard');
     console.error('2. Selecting your backend service');
     console.error('3. Going to the Variables tab');
     console.error('4. Adding DATABASE_URL with the value from your PostgreSQL service');
-    console.error('5. Make sure to use the variable reference: ${{Postgres.DATABASE_URL}}');
-  } else if (process.env.DATABASE_URL.includes('${{')) {
-    console.log('Using Railway variable reference for DATABASE_URL');
   }
 } else {
   // In development, we need either LOCAL_DATABASE_URL or all DB_* variables
@@ -39,7 +36,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // Log environment info
 console.log('Environment:', process.env.NODE_ENV);
-console.log('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
+console.log('Database URL:', process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL ? 'Set' : 'Not set');
 
 const app = express();
 const port = process.env.PORT || 3000;

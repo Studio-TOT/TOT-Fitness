@@ -5,9 +5,12 @@ const { Pool } = require('pg');
 // Get the appropriate database configuration based on environment
 const getDatabaseConfig = () => {
   if (process.env.NODE_ENV === 'production') {
-    // In production, use DATABASE_URL
-    if (!process.env.DATABASE_URL) {
-      console.error('DATABASE_URL is not set in production environment');
+    // In production, try to get the database URL from Railway's environment
+    const dbUrl = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL;
+
+    if (!dbUrl) {
+      console.error('No database URL found in production environment');
+      console.error('Available environment variables:', Object.keys(process.env).join(', '));
       // Return a default config that will fail gracefully
       return {
         connectionString: 'postgresql://invalid',
@@ -15,12 +18,11 @@ const getDatabaseConfig = () => {
       };
     }
 
-    // In Railway, the DATABASE_URL is already resolved
-    console.log('Production: Using DATABASE_URL for connection');
-    console.log('Database URL format:', process.env.DATABASE_URL.substring(0, 20) + '...');
+    console.log('Production: Using database URL for connection');
+    console.log('Database URL format:', dbUrl.substring(0, 20) + '...');
 
     return {
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl,
       ssl: { rejectUnauthorized: false }
     };
   }
