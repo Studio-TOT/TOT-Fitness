@@ -6,14 +6,19 @@ const { Pool } = require('pg');
 const getDatabaseConfig = () => {
   if (process.env.NODE_ENV === 'production') {
     // In production, use DATABASE_URL
-    if (process.env.DATABASE_URL) {
-      console.log('Production: Using DATABASE_URL for connection');
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL is not set in production environment');
+      // Return a default config that will fail gracefully
       return {
-        connectionString: process.env.DATABASE_URL,
+        connectionString: 'postgresql://invalid',
         ssl: { rejectUnauthorized: false }
       };
     }
-    throw new Error('DATABASE_URL is required in production');
+    console.log('Production: Using DATABASE_URL for connection');
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    };
   }
 
   // In development, use local database configuration

@@ -10,14 +10,19 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT);
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 console.log('DATABASE_URL format:', process.env.DATABASE_URL ?
-  process.env.DATABASE_URL.replace('${{Postgres.DATABASE_URL}}', '***') :
+  process.env.DATABASE_URL.substring(0, 20) + '...' :
   'Not set');
 
 // Environment variables validation
 if (process.env.NODE_ENV === 'production') {
   if (!process.env.DATABASE_URL) {
-    console.error('Missing DATABASE_URL in production environment');
-    process.exit(1);
+    console.error('WARNING: DATABASE_URL is not set in production environment');
+    console.error('Please make sure to set DATABASE_URL in your Railway environment variables');
+    console.error('You can do this by:');
+    console.error('1. Going to your Railway project dashboard');
+    console.error('2. Selecting your backend service');
+    console.error('3. Going to the Variables tab');
+    console.error('4. Adding DATABASE_URL with the value from your PostgreSQL service');
   }
 } else {
   // In development, we need either LOCAL_DATABASE_URL or all DB_* variables
