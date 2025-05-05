@@ -1,6 +1,9 @@
-// Load environment variables from .env file if it exists
-if (process.env.NODE_ENV !== 'production') {
-  require("dotenv").config();
+// Load environment variables from .env file
+require("dotenv").config();
+
+// Set NODE_ENV if not set
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
 }
 
 const express = require('express');
