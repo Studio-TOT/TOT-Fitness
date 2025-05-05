@@ -4,9 +4,11 @@ const { Pool } = require('pg');
 
 // Get the appropriate database configuration based on environment
 const getDatabaseConfig = () => {
+
   if (process.env.NODE_ENV === 'production') {
     if (!process.env.DATABASE_URL) {
       console.error('DATABASE_URL is required in production environment');
+      console.error('Available environment variables:', Object.keys(process.env).join(', '));
       throw new Error('DATABASE_URL is required in production environment');
     }
 
