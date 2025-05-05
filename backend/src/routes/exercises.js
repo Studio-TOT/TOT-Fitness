@@ -5,43 +5,14 @@ const { Pool } = require('pg');
 // Get the appropriate database configuration based on environment
 const getDatabaseConfig = () => {
   if (process.env.NODE_ENV === 'production') {
-    // In production, try to get the database URL from Railway's environment
-    const dbUrl = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL;
-
-    if (dbUrl) {
-      console.log('Production: Using provided DATABASE_URL');
-      return {
-        connectionString: dbUrl,
-        ssl: { rejectUnauthorized: false }
-      };
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL is required in production environment');
+      throw new Error('DATABASE_URL is required in production environment');
     }
 
-    // If no DATABASE_URL, try to construct it from individual variables
-    if (process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER && process.env.DB_PASSWORD) {
-      const port = process.env.DB_PORT || 5432;
-      const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${port}/${process.env.DB_NAME}`;
-      console.log('Production: Constructed DATABASE_URL from individual variables');
-      console.log('Connection string format:', connectionString.substring(0, 20) + '...');
-
-      return {
-        connectionString,
-        ssl: { rejectUnauthorized: false }
-      };
-    }
-
-    console.error('No database configuration found in production environment');
-    console.error('Available environment variables:', Object.keys(process.env).join(', '));
-    console.error('Required variables:', {
-      DB_HOST: process.env.DB_HOST,
-      DB_NAME: process.env.DB_NAME,
-      DB_USER: process.env.DB_USER,
-      DB_PASSWORD: process.env.DB_PASSWORD ? '****' : undefined,
-      DB_PORT: process.env.DB_PORT
-    });
-
-    // Return a default config that will fail gracefully
+    console.log('Production: Using DATABASE_URL for connection');
     return {
-      connectionString: 'postgresql://invalid',
+      connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
     };
   }
@@ -72,7 +43,9 @@ const dbConfig = getDatabaseConfig();
 console.log('Final database configuration:', {
   ...dbConfig,
   password: dbConfig.password ? '****' : undefined,
-  connectionString: dbConfig.connectionString ? '****' : undefined
+  connectionString: dbConfig.connectionString ?
+    dbConfig.connectionString.replace(/postgresql:\/\/[^:]+:[^@]+@/, 'postgresql://****:****@') :
+    undefined
 });
 
 // Create the connection pool
