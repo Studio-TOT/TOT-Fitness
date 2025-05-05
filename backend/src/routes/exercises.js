@@ -8,21 +8,40 @@ const getDatabaseConfig = () => {
     // In production, try to get the database URL from Railway's environment
     const dbUrl = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL;
 
-    if (!dbUrl) {
-      console.error('No database URL found in production environment');
-      console.error('Available environment variables:', Object.keys(process.env).join(', '));
-      // Return a default config that will fail gracefully
+    if (dbUrl) {
+      console.log('Production: Using provided DATABASE_URL');
       return {
-        connectionString: 'postgresql://invalid',
+        connectionString: dbUrl,
         ssl: { rejectUnauthorized: false }
       };
     }
 
-    console.log('Production: Using database URL for connection');
-    console.log('Database URL format:', dbUrl.substring(0, 20) + '...');
+    // If no DATABASE_URL, try to construct it from individual variables
+    if (process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER && process.env.DB_PASSWORD) {
+      const port = process.env.DB_PORT || 5432;
+      const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${port}/${process.env.DB_NAME}`;
+      console.log('Production: Constructed DATABASE_URL from individual variables');
+      console.log('Connection string format:', connectionString.substring(0, 20) + '...');
 
+      return {
+        connectionString,
+        ssl: { rejectUnauthorized: false }
+      };
+    }
+
+    console.error('No database configuration found in production environment');
+    console.error('Available environment variables:', Object.keys(process.env).join(', '));
+    console.error('Required variables:', {
+      DB_HOST: process.env.DB_HOST,
+      DB_NAME: process.env.DB_NAME,
+      DB_USER: process.env.DB_USER,
+      DB_PASSWORD: process.env.DB_PASSWORD ? '****' : undefined,
+      DB_PORT: process.env.DB_PORT
+    });
+
+    // Return a default config that will fail gracefully
     return {
-      connectionString: dbUrl,
+      connectionString: 'postgresql://invalid',
       ssl: { rejectUnauthorized: false }
     };
   }
