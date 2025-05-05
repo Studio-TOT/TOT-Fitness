@@ -14,9 +14,17 @@ const getDatabaseConfig = () => {
         ssl: { rejectUnauthorized: false }
       };
     }
+
+    // Handle Railway's variable reference syntax
+    const dbUrl = process.env.DATABASE_URL.includes('${{')
+      ? process.env.DATABASE_URL.replace('${{Postgres.DATABASE_URL}}', process.env.DATABASE_URL)
+      : process.env.DATABASE_URL;
+
     console.log('Production: Using DATABASE_URL for connection');
+    console.log('Database URL format:', dbUrl.substring(0, 20) + '...');
+
     return {
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl,
       ssl: { rejectUnauthorized: false }
     };
   }
