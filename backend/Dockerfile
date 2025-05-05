@@ -3,17 +3,20 @@ FROM node:16.14
 
 WORKDIR /usr/src/app
 
-ARG DB_HOST=${DB_HOST}
-ENV DB_HOST=${DB_HOST}
-ARG DB_USER=${DB_USER}
-ENV DB_USER=${DB_USER}
-ARG DB_PASSWORD=${DB_PASSWORD}
-ENV DB_PASSWORD=${DB_PASSWORD}
-ARG DB_NAME=${DB_NAME}
-ENV DB_NAME=${DB_NAME}
+# Copy package files
+COPY package*.json ./
 
-COPY . .
-
+# Install dependencies
 RUN npm install
 
-CMD [ "npm", "start" ]
+# Copy the rest of the application
+COPY . .
+
+# Set production environment
+ENV NODE_ENV=production
+
+# Expose the port
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]

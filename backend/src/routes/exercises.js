@@ -12,7 +12,6 @@ const getDatabaseConfig = () => {
       throw new Error('DATABASE_URL is required in production environment');
     }
 
-    console.log('Production: Using DATABASE_URL for connection');
     return {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
@@ -21,7 +20,6 @@ const getDatabaseConfig = () => {
 
   // In development, use local database configuration
   if (process.env.LOCAL_DATABASE_URL) {
-    console.log('Development: Using LOCAL_DATABASE_URL for connection');
     return {
       connectionString: process.env.LOCAL_DATABASE_URL,
       ssl: false
@@ -29,7 +27,6 @@ const getDatabaseConfig = () => {
   }
 
   // Fallback to individual parameters for local development
-  console.log('Development: Using individual parameters for connection');
   return {
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
@@ -42,39 +39,8 @@ const getDatabaseConfig = () => {
 
 // Get database configuration
 const dbConfig = getDatabaseConfig();
-console.log('Final database configuration:', {
-  ...dbConfig,
-  password: dbConfig.password ? '****' : undefined,
-  connectionString: dbConfig.connectionString ?
-    dbConfig.connectionString.replace(/postgresql:\/\/[^:]+:[^@]+@/, 'postgresql://****:****@') :
-    undefined
-});
-
 // Create the connection pool
 const pool = new Pool(dbConfig);
-
-// Test the database connection
-pool.connect()
-  .then(() => {
-    console.log('Successfully connected to the database');
-    console.log('Connection configuration:', {
-      host: pool.options.host || 'from connection string',
-      port: pool.options.port || 'from connection string',
-      database: pool.options.database || 'from connection string',
-      user: pool.options.user || 'from connection string',
-      ssl: pool.options.ssl ? 'enabled' : 'disabled'
-    });
-  })
-  .catch(err => {
-    console.error('Error connecting to the database:', err);
-    console.error('Connection details:', {
-      host: pool.options.host || 'from connection string',
-      port: pool.options.port || 'from connection string',
-      database: pool.options.database || 'from connection string',
-      user: pool.options.user || 'from connection string',
-      ssl: pool.options.ssl ? 'enabled' : 'disabled'
-    });
-  });
 
 // Transform exercise data to match frontend format
 const transformExercise = (exercise) => {
