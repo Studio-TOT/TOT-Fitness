@@ -8,12 +8,13 @@ import imgFilter from "../assets/settings-sliders.png";
 import backarrow from "../assets/back-arrow.svg";
 
 function BodyPartExercises() {
-  const { exercises, isLoading, fetchExercisesByBodyPart } = useExercises();
+  const { exercises, pagination, isLoading, fetchExercisesByBodyPart } = useExercises();
   const [bodyPart, setBodyPart] = useState("");
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const categories = [
     "Barbell",
@@ -44,12 +45,12 @@ function BodyPartExercises() {
   useEffect(() => {
     if (bodyPart) {
       setLocalLoading(true);
-      fetchExercisesByBodyPart(bodyPart, category)
+      fetchExercisesByBodyPart(bodyPart, category, currentPage, 10, search)
         .finally(() => {
           setLocalLoading(false);
         });
     }
-  }, [bodyPart, category, fetchExercisesByBodyPart]);
+  }, [bodyPart, category, currentPage, search, fetchExercisesByBodyPart]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -63,9 +64,15 @@ function BodyPartExercises() {
     setFilterOpen(!filterOpen);
   };
 
-  const filteredExercises = exercises.filter((item) =>
-    item?.exercise_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo(0, 0);
+  };
+
+  const handleSearch = (value) => {
+    setSearch(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
@@ -89,7 +96,7 @@ function BodyPartExercises() {
             <input
               className="w-64 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               type="text"
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               value={search}
               placeholder="Search your exercise"
             />
@@ -107,8 +114,10 @@ function BodyPartExercises() {
                   onChange={(e) => {
                     if (e.target.checked) {
                       setCategory(cat);
+                      setCurrentPage(1); // Reset to first page when changing category
                     } else {
                       setCategory("");
+                      setCurrentPage(1); // Reset to first page when clearing category
                     }
                   }}
                   className="hidden"
@@ -134,21 +143,54 @@ function BodyPartExercises() {
           <div className="flex justify-center items-center min-h-[300px]">
             <Spinner />
           </div>
-        ) : filteredExercises.length > 0 ? (
-          <div className="space-y-4">
-            {filteredExercises.map((e) => (
-              <Exercise
-                key={e.id}
-                name={e.exercise_name}
-                video={
-                  e.images?.male?.[0]?.branded_video ||
-                  e.images?.female?.[0]?.branded_video
-                }
-                description={e.steps}
-                category={e.category}
-              />
-            ))}
-          </div>
+        ) : exercises.length > 0 ? (
+          <>
+            <div className="space-y-4">
+              {exercises.map((e) => (
+                <Exercise
+                  key={e.id}
+                  name={e.exercise_name}
+                  video={
+                    e.images?.male?.[0]?.branded_video ||
+                    e.images?.female?.[0]?.branded_video
+                  }
+                  description={e.steps}
+                  category={e.category}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg ${
+                    currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  Previous
+                </button>
+                <span className="text-gray-600">
+                  Page {currentPage} of {pagination.totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === pagination.totalPages}
+                  className={`px-4 py-2 rounded-lg ${
+                    currentPage === pagination.totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex justify-center items-center min-h-[300px] p-8 bg-white rounded-lg shadow-sm">
             <div className="text-center">

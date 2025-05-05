@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
+const NodeCache = require('node-cache');
+
+// Create a cache with a TTL of 5 minutes
+const cache = new NodeCache({ stdTTL: 300 });
 
 // Get the appropriate database configuration based on environment
 const getDatabaseConfig = () => {
@@ -109,82 +113,90 @@ const transformExercise = (exercise) => {
 // Get all exercises with their related data
 router.get('/', async (req, res) => {
   try {
-    console.log('Attempting to fetch exercises from database...');
-    console.log('Using database connection:', dbConfig.connectionString ? 'DATABASE_URL' : 'Individual parameters');
+    const cacheKey = 'all_exercises';
 
-    const result = await pool.query(`
-      SELECT 
-        e.*,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', m.id,
-          'name', m.name,
-          'name_en_us', m.name_en_us,
-          'is_primary', em.is_primary,
-          'is_secondary', em.is_secondary,
-          'is_tertiary', em.is_tertiary
-        )) as muscles,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', c.id,
-          'name', c.name,
-          'name_en_us', c.name_en_us,
-          'is_primary', ec.is_primary
-        )) as categories,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', d.id,
-          'name', d.name,
-          'name_en_us', d.name_en_us
-        )) as difficulty,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', f.id,
-          'name', f.name,
-          'name_en_us', f.name_en_us
-        )) as force,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', me.id,
-          'name', me.name,
-          'name_en_us', me.name_en_us
-        )) as mechanic,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', s.id,
-          'order', s.order_num,
-          'text', s.text,
-          'text_en_us', s.text_en_us
-        )) as steps,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', i.id,
-          'gender', i.gender,
-          'order', i.order_num,
-          'og_image', i.og_image,
-          'original_video', i.original_video,
-          'unbranded_video', i.unbranded_video,
-          'branded_video', i.branded_video
-        )) as images
-      FROM exercises e
-      LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
-      LEFT JOIN muscles m ON em.muscle_id = m.id
-      LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
-      LEFT JOIN categories c ON ec.category_id = c.id
-      LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
-      LEFT JOIN difficulties d ON ed.difficulty_id = d.id
-      LEFT JOIN forces f ON ed.force_id = f.id
-      LEFT JOIN mechanics me ON ed.mechanic_id = me.id
-      LEFT JOIN exercise_steps s ON e.id = s.exercise_id
-      LEFT JOIN exercise_images i ON e.id = i.exercise_id
-      GROUP BY e.id
-    `);
+    // Check cache first
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
+    }
 
-    console.log(`Successfully fetched ${result.rows.length} exercises`);
+    const client = await req.db.connect();
+    try {
+      const result = await client.query(`
+        SELECT 
+          e.*,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', m.id,
+            'name', m.name,
+            'name_en_us', m.name_en_us,
+            'is_primary', em.is_primary,
+            'is_secondary', em.is_secondary,
+            'is_tertiary', em.is_tertiary
+          )) as muscles,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', c.id,
+            'name', c.name,
+            'name_en_us', c.name_en_us,
+            'is_primary', ec.is_primary
+          )) as categories,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', d.id,
+            'name', d.name,
+            'name_en_us', d.name_en_us
+          )) as difficulty,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', f.id,
+            'name', f.name,
+            'name_en_us', f.name_en_us
+          )) as force,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', me.id,
+            'name', me.name,
+            'name_en_us', me.name_en_us
+          )) as mechanic,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', s.id,
+            'order', s.order_num,
+            'text', s.text,
+            'text_en_us', s.text_en_us
+          )) as steps,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', i.id,
+            'gender', i.gender,
+            'order', i.order_num,
+            'og_image', i.og_image,
+            'original_video', i.original_video,
+            'unbranded_video', i.unbranded_video,
+            'branded_video', i.branded_video
+          )) as images
+        FROM exercises e
+        LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
+        LEFT JOIN muscles m ON em.muscle_id = m.id
+        LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
+        LEFT JOIN categories c ON ec.category_id = c.id
+        LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
+        LEFT JOIN difficulties d ON ed.difficulty_id = d.id
+        LEFT JOIN forces f ON ed.force_id = f.id
+        LEFT JOIN mechanics me ON ed.mechanic_id = me.id
+        LEFT JOIN exercise_steps s ON e.id = s.exercise_id
+        LEFT JOIN exercise_images i ON e.id = i.exercise_id
+        GROUP BY e.id
+        ORDER BY e.name
+      `);
 
-    // Transform the data to match the frontend's expected format
-    const transformedExercises = result.rows.map(transformExercise);
+      const exercises = result.rows.map(transformExercise);
 
-    res.json(transformedExercises);
+      // Cache the results
+      cache.set(cacheKey, exercises);
+
+      res.json(exercises);
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('Error fetching exercises:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -255,41 +267,7 @@ router.get('/muscle/:muscleName', async (req, res) => {
     `, [`%${muscleName}%`]);
 
     // Transform the data to match the frontend's expected format
-    const exercises = result.rows.map(exercise => ({
-      id: exercise.id,
-      exercise_name: exercise.name,
-      target: {
-        Primary: exercise.muscles
-          .filter(m => m.is_primary)
-          .map(m => m.name),
-        Secondary: exercise.muscles
-          .filter(m => m.is_secondary)
-          .map(m => m.name),
-        Tertiary: exercise.muscles
-          .filter(m => m.is_tertiary)
-          .map(m => m.name)
-      },
-      category: exercise.categories
-        .filter(c => c.is_primary)
-        .map(c => c.name)[0],
-      equipment: exercise.categories
-        .filter(c => !c.is_primary)
-        .map(c => c.name),
-      difficulty: exercise.difficulty?.[0]?.name,
-      force: exercise.force?.[0]?.name,
-      mechanic: exercise.mechanic?.[0]?.name,
-      steps: exercise.steps
-        .sort((a, b) => a.order - b.order)
-        .map(s => s.text),
-      images: {
-        male: exercise.images
-          .filter(i => i.gender === 'male')
-          .sort((a, b) => a.order - b.order),
-        female: exercise.images
-          .filter(i => i.gender === 'female')
-          .sort((a, b) => a.order - b.order)
-      }
-    }));
+    const exercises = result.rows.map(transformExercise);
 
     res.json(exercises);
   } catch (error) {
@@ -302,101 +280,157 @@ router.get('/muscle/:muscleName', async (req, res) => {
 router.get('/bodypart/:bodyPart', async (req, res) => {
   try {
     const { bodyPart } = req.params;
-    const { category } = req.query;
+    const { category, page = 1, limit = 20, search = '' } = req.query;
+    const offset = (page - 1) * limit;
 
-    console.log(`Fetching exercises for body part: ${bodyPart}${category ? ` and category: ${category}` : ''}`);
+    const cacheKey = `bodypart_${bodyPart}${category ? `_${category}` : ''}_page${page}_limit${limit}_search${search}`;
 
-    let query = `
-      SELECT 
-        e.*,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', m.id,
-          'name', m.name,
-          'name_en_us', m.name_en_us,
-          'is_primary', em.is_primary,
-          'is_secondary', em.is_secondary,
-          'is_tertiary', em.is_tertiary
-        )) FILTER (WHERE m.id IS NOT NULL) as muscles,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', c.id,
-          'name', c.name,
-          'name_en_us', c.name_en_us,
-          'is_primary', ec.is_primary
-        )) FILTER (WHERE c.id IS NOT NULL) as categories,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', d.id,
-          'name', d.name,
-          'name_en_us', d.name_en_us
-        )) FILTER (WHERE d.id IS NOT NULL) as difficulty,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', f.id,
-          'name', f.name,
-          'name_en_us', f.name_en_us
-        )) FILTER (WHERE f.id IS NOT NULL) as force,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', me.id,
-          'name', me.name,
-          'name_en_us', me.name_en_us
-        )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', s.id,
-          'order', s.order_num,
-          'text', s.text,
-          'text_en_us', s.text_en_us
-        )) FILTER (WHERE s.id IS NOT NULL) as steps,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', i.id,
-          'gender', i.gender,
-          'order', i.order_num,
-          'og_image', i.og_image,
-          'original_video', i.original_video,
-          'unbranded_video', i.unbranded_video,
-          'branded_video', i.branded_video
-        )) FILTER (WHERE i.id IS NOT NULL) as images
-      FROM exercises e
-      LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
-      LEFT JOIN muscles m ON em.muscle_id = m.id
-      LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
-      LEFT JOIN categories c ON ec.category_id = c.id
-      LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
-      LEFT JOIN difficulties d ON ed.difficulty_id = d.id
-      LEFT JOIN forces f ON ed.force_id = f.id
-      LEFT JOIN mechanics me ON ed.mechanic_id = me.id
-      LEFT JOIN exercise_steps s ON e.id = s.exercise_id
-      LEFT JOIN exercise_images i ON e.id = i.exercise_id
-      WHERE (m.name ILIKE $1 OR m.name_en_us ILIKE $1)
-    `;
-
-    const queryParams = [`%${bodyPart}%`];
-
-    if (category) {
-      query += ` AND (c.name ILIKE $2 OR c.name_en_us ILIKE $2)`;
-      queryParams.push(`%${category}%`);
+    // Check cache first
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
     }
 
-    query += ` GROUP BY e.id`;
+    const client = await req.db.connect();
+    try {
+      // First, get total count with search
+      let countQuery = `
+        SELECT COUNT(DISTINCT e.id) as total
+        FROM exercises e
+        LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
+        LEFT JOIN muscles m ON em.muscle_id = m.id
+        LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
+        LEFT JOIN categories c ON ec.category_id = c.id
+        WHERE (m.name ILIKE $1 OR m.name_en_us ILIKE $1)
+      `;
 
-    console.log('Executing query with params:', queryParams);
-    const result = await pool.query(query, queryParams);
-    console.log(`Found ${result.rows.length} exercises`);
+      const countParams = [`%${bodyPart}%`];
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: 'No exercises found',
-        details: `No exercises found for body part: ${bodyPart}${category ? ` and category: ${category}` : ''}`
-      });
+      if (category) {
+        countQuery += ` AND (c.name ILIKE $2 OR c.name_en_us ILIKE $2)`;
+        countParams.push(`%${category}%`);
+      }
+
+      if (search) {
+        countQuery += ` AND e.name ILIKE $${countParams.length + 1}`;
+        countParams.push(`%${search}%`);
+      }
+
+      const countResult = await client.query(countQuery, countParams);
+      const total = parseInt(countResult.rows[0].total);
+
+      if (total === 0) {
+        return res.status(404).json({
+          error: 'No exercises found',
+          details: `No exercises found for body part: ${bodyPart}${category ? ` and category: ${category}` : ''}${search ? ` and search: ${search}` : ''}`
+        });
+      }
+
+      // Then get paginated data with search
+      let query = `
+        SELECT 
+          e.*,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', m.id,
+            'name', m.name,
+            'name_en_us', m.name_en_us,
+            'is_primary', em.is_primary,
+            'is_secondary', em.is_secondary,
+            'is_tertiary', em.is_tertiary
+          )) FILTER (WHERE m.id IS NOT NULL) as muscles,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', c.id,
+            'name', c.name,
+            'name_en_us', c.name_en_us,
+            'is_primary', ec.is_primary
+          )) FILTER (WHERE c.id IS NOT NULL) as categories,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', d.id,
+            'name', d.name,
+            'name_en_us', d.name_en_us
+          )) FILTER (WHERE d.id IS NOT NULL) as difficulty,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', f.id,
+            'name', f.name,
+            'name_en_us', f.name_en_us
+          )) FILTER (WHERE f.id IS NOT NULL) as force,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', me.id,
+            'name', me.name,
+            'name_en_us', me.name_en_us
+          )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', s.id,
+            'order', s.order_num,
+            'text', s.text,
+            'text_en_us', s.text_en_us
+          )) FILTER (WHERE s.id IS NOT NULL) as steps,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', i.id,
+            'gender', i.gender,
+            'order', i.order_num,
+            'og_image', i.og_image,
+            'original_video', i.original_video,
+            'unbranded_video', i.unbranded_video,
+            'branded_video', i.branded_video
+          )) FILTER (WHERE i.id IS NOT NULL) as images
+        FROM exercises e
+        LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
+        LEFT JOIN muscles m ON em.muscle_id = m.id
+        LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
+        LEFT JOIN categories c ON ec.category_id = c.id
+        LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
+        LEFT JOIN difficulties d ON ed.difficulty_id = d.id
+        LEFT JOIN forces f ON ed.force_id = f.id
+        LEFT JOIN mechanics me ON ed.mechanic_id = me.id
+        LEFT JOIN exercise_steps s ON e.id = s.exercise_id
+        LEFT JOIN exercise_images i ON e.id = i.exercise_id
+        WHERE (m.name ILIKE $1 OR m.name_en_us ILIKE $1)
+      `;
+
+      const queryParams = [`%${bodyPart}%`];
+
+      if (category) {
+        query += ` AND (c.name ILIKE $${queryParams.length + 1} OR c.name_en_us ILIKE $${queryParams.length + 1})`;
+        queryParams.push(`%${category}%`);
+      }
+
+      if (search) {
+        query += ` AND e.name ILIKE $${queryParams.length + 1}`;
+        queryParams.push(`%${search}%`);
+      }
+
+      query += `
+        GROUP BY e.id
+        ORDER BY e.name
+        LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
+      `;
+
+      queryParams.push(limit, offset);
+
+      const result = await client.query(query, queryParams);
+      const exercises = result.rows.map(transformExercise);
+
+      const response = {
+        data: exercises,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(total / limit)
+        }
+      };
+
+      // Cache the results
+      cache.set(cacheKey, response);
+
+      res.json(response);
+    } finally {
+      client.release();
     }
-
-    // Transform the data to match the frontend's expected format
-    const exercises = result.rows.map(transformExercise);
-    res.json(exercises);
   } catch (error) {
-    console.error('Error fetching exercises by body part:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    console.error('Error fetching exercises:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

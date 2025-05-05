@@ -8,7 +8,28 @@ if (!process.env.NODE_ENV) {
 
 const express = require('express');
 const cors = require('cors');
+const { Pool } = require('pg');
 const exercisesRouter = require('./src/routes/exercises');
+
+// Database connection pool configuration
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
+  connectionTimeoutMillis: 2000, // How long to wait for a connection
+  maxUses: 7500, // Close a connection after it has been used this many times
+});
+
+// Test database connection
+pool.on('connect', () => {
+  console.log('Connected to database');
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -38,6 +59,12 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 app.use(express.json());
+
+// Add database pool to request object
+app.use((req, res, next) => {
+  req.db = pool;
+  next();
+});
 
 // Exercise routes
 app.use('/api/exercises', exercisesRouter);
@@ -96,4 +123,5 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
 });

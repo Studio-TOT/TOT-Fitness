@@ -15,6 +15,12 @@ const getApiUrl = () => {
 
 export function ExerciseProvider({ children }) {
   const [exercises, setExercises] = useState([]);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const apiUrl = getApiUrl();
@@ -52,7 +58,7 @@ export function ExerciseProvider({ children }) {
     }
   }, [apiUrl]);
 
-  const fetchExercisesByBodyPart = useCallback(async (bodyPart, category) => {
+  const fetchExercisesByBodyPart = useCallback(async (bodyPart, category, page = 1, limit = 10, search = '') => {
     if (!apiUrl) {
       setError('API URL is not configured. Please check your environment variables.');
       return;
@@ -61,18 +67,37 @@ export function ExerciseProvider({ children }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${apiUrl}/api/exercises/bodypart/${bodyPart}${category ? `?category=${category}` : ''}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+      const queryParams = new URLSearchParams({
+        page,
+        limit
       });
+      if (category) {
+        queryParams.append('category', category);
+      }
+      if (search) {
+        queryParams.append('search', search);
+      }
+
+      const response = await fetch(
+        `${apiUrl}/api/exercises/bodypart/${bodyPart}?${queryParams.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 404) {
-          // No exercises found is not an error, just an empty array
           setExercises([]);
+          setPagination({
+            total: 0,
+            page: 1,
+            limit,
+            totalPages: 0
+          });
           return;
         }
         throw new Error(
@@ -81,7 +106,13 @@ export function ExerciseProvider({ children }) {
       }
       
       const data = await response.json();
-      setExercises(data || []);
+      setExercises(data.data || []);
+      setPagination(data.pagination || {
+        total: 0,
+        page: 1,
+        limit,
+        totalPages: 0
+      });
     } catch (err) {
       setError(
         err.message.includes("ECONNREFUSED")
@@ -89,6 +120,12 @@ export function ExerciseProvider({ children }) {
           : err.message
       );
       setExercises([]);
+      setPagination({
+        total: 0,
+        page: 1,
+        limit,
+        totalPages: 0
+      });
     } finally {
       setIsLoading(false);
     }
@@ -109,6 +146,7 @@ export function ExerciseProvider({ children }) {
 
   const value = {
     exercises,
+    pagination,
     isLoading,
     error,
     fetchExercises,
@@ -130,7 +168,7 @@ ExerciseProvider.propTypes = {
 export function useExercises() {
   const context = useContext(ExerciseContext);
   if (context === undefined) {
-    throw new Error("useExercises must be used within an ExerciseProvider");
+    throw new Error('useExercises must be used within an ExerciseProvider');
   }
   return context;
 } 
