@@ -53,7 +53,6 @@ const transformExercise = (exercise) => {
   const categories = exercise.categories || [];
   const steps = exercise.steps || [];
   const images = exercise.images || [];
-  const difficulties = exercise.difficulty ? [exercise.difficulty] : [];
 
   const primaryMuscles = muscles
     .filter(m => m && m.is_primary)
@@ -75,8 +74,8 @@ const transformExercise = (exercise) => {
     .filter(c => c && !c.is_primary)
     .map(c => c.name);
 
-  // Get difficulty from the first difficulty object
-  const difficulty = difficulties?.[0]?.name?.toLowerCase() || null;
+  // Get difficulty from the new difficulty_name field
+  const difficulty = exercise.difficulty_name ? exercise.difficulty_name.toLowerCase() : null;
 
   // Filter out null values from steps and sort by order
   const validSteps = steps
@@ -93,15 +92,7 @@ const transformExercise = (exercise) => {
     .filter(i => i && i.gender === 'female' && i.branded_video)
     .sort((a, b) => a.order - b.order);
 
-  // Log the exercise data for debugging
-  console.log('Exercise:', {
-    id: exercise.id,
-    name: exercise.name,
-    rawDifficulty: exercise.difficulty,
-    difficulties,
-    transformedDifficulty: difficulty
-  });
-
+ 
   return {
     id: exercise.id,
     exercise_name: exercise.name,
@@ -112,7 +103,7 @@ const transformExercise = (exercise) => {
     },
     category: primaryCategory,
     equipment,
-    difficulty, // Already converted to lowercase
+    difficulty,
     force: exercise.force?.[0]?.name,
     mechanic: exercise.mechanic?.[0]?.name,
     steps: validSteps.length > 0 ? validSteps : [null], // Return [null] if no steps
@@ -137,19 +128,9 @@ router.get('/', async (req, res) => {
     const client = await req.db.connect();
     try {
       const result = await client.query(`
-        WITH exercise_details_with_difficulty AS (
-          SELECT 
-            ed.exercise_id,
-            json_build_object(
-              'id', d.id,
-              'name', d.name,
-              'name_en_us', d.name_en_us
-            ) as difficulty
-          FROM exercise_details ed
-          LEFT JOIN difficulties d ON ed.difficulty_id = d.id
-        )
-        SELECT 
+        SELECT
           e.*,
+          (SELECT d.name FROM difficulties d JOIN exercise_details ed_sub ON d.id = ed_sub.difficulty_id WHERE ed_sub.exercise_id = e.id) as difficulty_name,
           json_agg(DISTINCT jsonb_build_object(
             'id', m.id,
             'name', m.name,
@@ -164,7 +145,6 @@ router.get('/', async (req, res) => {
             'name_en_us', c.name_en_us,
             'is_primary', ec.is_primary
           )) FILTER (WHERE c.id IS NOT NULL) as categories,
-          ed.difficulty,
           json_agg(DISTINCT jsonb_build_object(
             'id', f.id,
             'name', f.name,
@@ -195,20 +175,16 @@ router.get('/', async (req, res) => {
         LEFT JOIN muscles m ON em.muscle_id = m.id
         LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
         LEFT JOIN categories c ON ec.category_id = c.id
-        LEFT JOIN exercise_details_with_difficulty ed ON e.id = ed.exercise_id
-        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id
+        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id -- Alias for details related to force/mechanic
         LEFT JOIN forces f ON ed2.force_id = f.id
         LEFT JOIN mechanics me ON ed2.mechanic_id = me.id
         LEFT JOIN exercise_steps es ON e.id = es.exercise_id
         LEFT JOIN steps s ON es.step_id = s.id
         LEFT JOIN exercise_images ei ON e.id = ei.exercise_id
         LEFT JOIN images i ON ei.image_id = i.id
-        GROUP BY e.id, e.name, ed.difficulty
+        GROUP BY e.id, e.name, e.description, e.name_en_us, e.name_alternative, e.slug, e.description_en_us, e.need_warmup, e.advanced_weight, e.featured_weight, e.weight, e.impact, e.use_youtube_links, e.featured, e.sponsered_link, e.status, e.created_at, e.updated_at
         ORDER BY e.name;
       `);
-
-      // Log the raw data for debugging
-      console.log('Raw data for first exercise:', JSON.stringify(result.rows[0], null, 2));
 
       const exercises = result.rows.map(transformExercise);
 
@@ -356,6 +332,7 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
       let query = `
         SELECT 
           e.*,
+          ed_diff.difficulty_name,
           json_agg(DISTINCT jsonb_build_object(
             'id', m.id,
             'name', m.name,
@@ -370,11 +347,6 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
             'name_en_us', c.name_en_us,
             'is_primary', ec.is_primary
           )) FILTER (WHERE c.id IS NOT NULL) as categories,
-          json_agg(DISTINCT jsonb_build_object(
-            'id', d.id,
-            'name', d.name,
-            'name_en_us', d.name_en_us
-          )) FILTER (WHERE d.id IS NOT NULL) as difficulty,
           json_agg(DISTINCT jsonb_build_object(
             'id', f.id,
             'name', f.name,
@@ -405,10 +377,14 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
         LEFT JOIN muscles m ON em.muscle_id = m.id
         LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
         LEFT JOIN categories c ON ec.category_id = c.id
-        LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
-        LEFT JOIN difficulties d ON ed.difficulty_id = d.id
-        LEFT JOIN forces f ON ed.force_id = f.id
-        LEFT JOIN mechanics me ON ed.mechanic_id = me.id
+        LEFT JOIN (
+          SELECT ed_sub.exercise_id, d.name as difficulty_name
+          FROM exercise_details ed_sub
+          JOIN difficulties d ON ed_sub.difficulty_id = d.id
+        ) ed_diff ON e.id = ed_diff.exercise_id
+        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id -- Alias for details related to force/mechanic
+        LEFT JOIN forces f ON ed2.force_id = f.id
+        LEFT JOIN mechanics me ON ed2.mechanic_id = me.id
         LEFT JOIN exercise_steps s ON e.id = s.exercise_id
         LEFT JOIN exercise_images i ON e.id = i.exercise_id
         WHERE (m.name ILIKE $1 OR m.name_en_us ILIKE $1)
@@ -427,7 +403,7 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
       }
 
       query += `
-        GROUP BY e.id
+        GROUP BY e.id, e.name, e.description, e.name_en_us, e.name_alternative, e.slug, e.description_en_us, e.need_warmup, e.advanced_weight, e.featured_weight, e.weight, e.impact, e.use_youtube_links, e.featured, e.sponsered_link, e.status, e.created_at, e.updated_at, ed_diff.difficulty_name
         ORDER BY e.name
         LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
       `;

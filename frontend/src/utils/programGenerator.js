@@ -21,7 +21,11 @@ const createWeekExercises = (exercises, count = 5) => {
   if (!Array.isArray(exercises)) return [];
   const shuffled = [...exercises].sort(() => 0.5 - Math.random());
   const selectedExercises = shuffled.slice(0, count);
-  return selectedExercises;
+  return selectedExercises.map(exercise => ({
+    ...exercise,
+    exercise_name: exercise.exercise_name || exercise.name,
+    difficulty: exercise.difficulty || null
+  }));
 };
 
 // Generate a program with exercises for each day

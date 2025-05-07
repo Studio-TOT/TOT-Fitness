@@ -105,20 +105,22 @@ function Exercise({
           id="panel1a-header"
           className="bg-white hover:bg-gray-50 transition-colors duration-200"
         >
-          <div className="flex items-center w-full">
+          <div className="flex items-center justify-between w-full">
+           <div className="flex items-center gap-2"> 
             <Typography className="text-base md:text-lg font-semibold text-gray-800">
               {name}
             </Typography>
-            <div className="flex items-center gap-2 ml-2 md:ml-3">
               {category && (
                 <span className="px-2 md:px-3 py-0.5 md:py-1 text-xs md:text-sm bg-blue-100 text-blue-800 rounded-full">
                   {category}
                 </span>
               )}
+            </div>
+            <div className="flex items-center gap-2 ml-2 md:ml-3">
               {difficulty && (
-                <span className={`flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 text-xs md:text-sm rounded-full border ${difficultyStyles.bg} ${difficultyStyles.text} ${difficultyStyles.border}`}>
+                <span className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded-md ${difficultyStyles.bg} ${difficultyStyles.text} ${difficultyStyles.border}`}>
                   {difficultyStyles.icon}
-                  <span className="font-medium">{difficulty}</span>
+                  <span className="font-normal">{difficulty}</span>
                 </span>
               )}
             </div>

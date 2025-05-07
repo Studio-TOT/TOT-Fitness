@@ -12,14 +12,39 @@ const { Pool } = require('pg');
 const exercisesRouter = require('./src/routes/exercises');
 
 // Database connection pool configuration
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+console.log('Database connection configuration:');
+let dbConfig = {};
+if (process.env.NODE_ENV === 'development' && process.env.LOCAL_DATABASE_URL) {
+  dbConfig = {
+    connectionString: process.env.LOCAL_DATABASE_URL,
+    ssl: false,
+  };
+} else if (process.env.DATABASE_URL) {
+  dbConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  };
+} else {
+  dbConfig = {
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 5432,
+    ssl: false,
+  };
+}
+
+// Add pool configuration
+dbConfig = {
+  ...dbConfig,
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
   connectionTimeoutMillis: 2000, // How long to wait for a connection
   maxUses: 7500, // Close a connection after it has been used this many times
-});
+};
+
+const pool = new Pool(dbConfig);
 
 // Test database connection
 pool.on('connect', () => {

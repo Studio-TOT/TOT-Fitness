@@ -158,6 +158,7 @@ function BodyPartExercises() {
                   }
                   description={e.steps}
                   category={e.category}
+                  difficulty={e.difficulty}
                 />
               ))}
             </div>

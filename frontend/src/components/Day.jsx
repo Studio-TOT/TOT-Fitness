@@ -31,6 +31,7 @@ function Day({ day, exercises = [] }) {
             video={exercise?.images?.male?.[0]?.branded_video || exercise?.images?.female?.[0]?.branded_video}
             description={exercise?.steps}
             category={exercise?.category}
+            difficulty={exercise?.difficulty}
           />
         ))}
       </div>
@@ -45,6 +46,7 @@ Day.propTypes = {
       id: PropTypes.number,
       exercise_name: PropTypes.string,
       category: PropTypes.string,
+      difficulty: PropTypes.string,
       equipment: PropTypes.arrayOf(PropTypes.string),
       target: PropTypes.shape({
         Primary: PropTypes.arrayOf(PropTypes.string),
