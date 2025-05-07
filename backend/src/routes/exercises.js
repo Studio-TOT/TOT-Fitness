@@ -53,6 +53,7 @@ const transformExercise = (exercise) => {
   const categories = exercise.categories || [];
   const steps = exercise.steps || [];
   const images = exercise.images || [];
+  const difficulties = exercise.difficulty ? [exercise.difficulty] : [];
 
   const primaryMuscles = muscles
     .filter(m => m && m.is_primary)
@@ -74,6 +75,9 @@ const transformExercise = (exercise) => {
     .filter(c => c && !c.is_primary)
     .map(c => c.name);
 
+  // Get difficulty from the first difficulty object
+  const difficulty = difficulties?.[0]?.name?.toLowerCase() || null;
+
   // Filter out null values from steps and sort by order
   const validSteps = steps
     .filter(s => s && s.text) // Filter out null or undefined steps
@@ -89,6 +93,15 @@ const transformExercise = (exercise) => {
     .filter(i => i && i.gender === 'female' && i.branded_video)
     .sort((a, b) => a.order - b.order);
 
+  // Log the exercise data for debugging
+  console.log('Exercise:', {
+    id: exercise.id,
+    name: exercise.name,
+    rawDifficulty: exercise.difficulty,
+    difficulties,
+    transformedDifficulty: difficulty
+  });
+
   return {
     id: exercise.id,
     exercise_name: exercise.name,
@@ -99,7 +112,7 @@ const transformExercise = (exercise) => {
     },
     category: primaryCategory,
     equipment,
-    difficulty: exercise.difficulty?.[0]?.name,
+    difficulty, // Already converted to lowercase
     force: exercise.force?.[0]?.name,
     mechanic: exercise.mechanic?.[0]?.name,
     steps: validSteps.length > 0 ? validSteps : [null], // Return [null] if no steps
@@ -124,6 +137,17 @@ router.get('/', async (req, res) => {
     const client = await req.db.connect();
     try {
       const result = await client.query(`
+        WITH exercise_details_with_difficulty AS (
+          SELECT 
+            ed.exercise_id,
+            json_build_object(
+              'id', d.id,
+              'name', d.name,
+              'name_en_us', d.name_en_us
+            ) as difficulty
+          FROM exercise_details ed
+          LEFT JOIN difficulties d ON ed.difficulty_id = d.id
+        )
         SELECT 
           e.*,
           json_agg(DISTINCT jsonb_build_object(
@@ -133,34 +157,30 @@ router.get('/', async (req, res) => {
             'is_primary', em.is_primary,
             'is_secondary', em.is_secondary,
             'is_tertiary', em.is_tertiary
-          )) as muscles,
+          )) FILTER (WHERE m.id IS NOT NULL) as muscles,
           json_agg(DISTINCT jsonb_build_object(
             'id', c.id,
             'name', c.name,
             'name_en_us', c.name_en_us,
             'is_primary', ec.is_primary
-          )) as categories,
-          json_agg(DISTINCT jsonb_build_object(
-            'id', d.id,
-            'name', d.name,
-            'name_en_us', d.name_en_us
-          )) as difficulty,
+          )) FILTER (WHERE c.id IS NOT NULL) as categories,
+          ed.difficulty,
           json_agg(DISTINCT jsonb_build_object(
             'id', f.id,
             'name', f.name,
             'name_en_us', f.name_en_us
-          )) as force,
+          )) FILTER (WHERE f.id IS NOT NULL) as force,
           json_agg(DISTINCT jsonb_build_object(
             'id', me.id,
             'name', me.name,
             'name_en_us', me.name_en_us
-          )) as mechanic,
+          )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
           json_agg(DISTINCT jsonb_build_object(
             'id', s.id,
             'order', s.order_num,
             'text', s.text,
             'text_en_us', s.text_en_us
-          )) as steps,
+          )) FILTER (WHERE s.id IS NOT NULL) as steps,
           json_agg(DISTINCT jsonb_build_object(
             'id', i.id,
             'gender', i.gender,
@@ -169,21 +189,26 @@ router.get('/', async (req, res) => {
             'original_video', i.original_video,
             'unbranded_video', i.unbranded_video,
             'branded_video', i.branded_video
-          )) as images
+          )) FILTER (WHERE i.id IS NOT NULL) as images
         FROM exercises e
         LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
         LEFT JOIN muscles m ON em.muscle_id = m.id
         LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
         LEFT JOIN categories c ON ec.category_id = c.id
-        LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
-        LEFT JOIN difficulties d ON ed.difficulty_id = d.id
-        LEFT JOIN forces f ON ed.force_id = f.id
-        LEFT JOIN mechanics me ON ed.mechanic_id = me.id
-        LEFT JOIN exercise_steps s ON e.id = s.exercise_id
-        LEFT JOIN exercise_images i ON e.id = i.exercise_id
-        GROUP BY e.id
-        ORDER BY e.name
+        LEFT JOIN exercise_details_with_difficulty ed ON e.id = ed.exercise_id
+        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id
+        LEFT JOIN forces f ON ed2.force_id = f.id
+        LEFT JOIN mechanics me ON ed2.mechanic_id = me.id
+        LEFT JOIN exercise_steps es ON e.id = es.exercise_id
+        LEFT JOIN steps s ON es.step_id = s.id
+        LEFT JOIN exercise_images ei ON e.id = ei.exercise_id
+        LEFT JOIN images i ON ei.image_id = i.id
+        GROUP BY e.id, e.name, ed.difficulty
+        ORDER BY e.name;
       `);
+
+      // Log the raw data for debugging
+      console.log('Raw data for first exercise:', JSON.stringify(result.rows[0], null, 2));
 
       const exercises = result.rows.map(transformExercise);
 
@@ -214,34 +239,34 @@ router.get('/muscle/:muscleName', async (req, res) => {
           'is_primary', em.is_primary,
           'is_secondary', em.is_secondary,
           'is_tertiary', em.is_tertiary
-        )) as muscles,
+        )) FILTER (WHERE m.id IS NOT NULL) as muscles,
         json_agg(DISTINCT jsonb_build_object(
           'id', c.id,
           'name', c.name,
           'name_en_us', c.name_en_us,
           'is_primary', ec.is_primary
-        )) as categories,
+        )) FILTER (WHERE c.id IS NOT NULL) as categories,
         json_agg(DISTINCT jsonb_build_object(
           'id', d.id,
           'name', d.name,
           'name_en_us', d.name_en_us
-        )) as difficulty,
+        )) FILTER (WHERE d.id IS NOT NULL) as difficulty,
         json_agg(DISTINCT jsonb_build_object(
           'id', f.id,
           'name', f.name,
           'name_en_us', f.name_en_us
-        )) as force,
+        )) FILTER (WHERE f.id IS NOT NULL) as force,
         json_agg(DISTINCT jsonb_build_object(
           'id', me.id,
           'name', me.name,
           'name_en_us', me.name_en_us
-        )) as mechanic,
+        )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
         json_agg(DISTINCT jsonb_build_object(
           'id', s.id,
           'order', s.order_num,
           'text', s.text,
           'text_en_us', s.text_en_us
-        )) as steps,
+        )) FILTER (WHERE s.id IS NOT NULL) as steps,
         json_agg(DISTINCT jsonb_build_object(
           'id', i.id,
           'gender', i.gender,
@@ -250,7 +275,7 @@ router.get('/muscle/:muscleName', async (req, res) => {
           'original_video', i.original_video,
           'unbranded_video', i.unbranded_video,
           'branded_video', i.branded_video
-        )) as images
+        )) FILTER (WHERE i.id IS NOT NULL) as images
       FROM exercises e
       LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
       LEFT JOIN muscles m ON em.muscle_id = m.id
@@ -264,6 +289,7 @@ router.get('/muscle/:muscleName', async (req, res) => {
       LEFT JOIN exercise_images i ON e.id = i.exercise_id
       WHERE m.name ILIKE $1 OR m.name_en_us ILIKE $1
       GROUP BY e.id
+      ORDER BY e.name
     `, [`%${muscleName}%`]);
 
     // Transform the data to match the frontend's expected format

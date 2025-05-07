@@ -75,26 +75,28 @@ function BodyPartExercises() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      <div className="sticky top-16 z-10 bg-white shadow-sm">
-        <div className="flex items-center justify-between p-4">
+    <div className="min-h-screen bg-gray-50 pt-0 md:pt-16">
+      <div className="sticky top-0 md:top-16 z-10 bg-white shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4">
           <div className="flex items-center gap-4">
             <Link to="/" onClick={handleNav} className="flex items-center">
               <img className="w-6 h-6" src={backarrow} alt="backarrow" />
             </Link>
-            <h2 className="text-2xl font-semibold text-gray-800">{bodyPart} exercises</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-800">{bodyPart} exercises</h2>
           </div>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-              onClick={openFilter}
-            >
-              <img src={imgFilter} alt="" className="w-5 h-5" />
-              <span>Filters</span>
-            </button>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 flex-1 md:flex-none justify-center"
+                onClick={openFilter}
+              >
+                <img src={imgFilter} alt="" className="w-5 h-5" />
+                <span>Filters</span>
+              </button>
+            </div>
             <input
-              className="w-64 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full md:w-64 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               type="text"
               onChange={(e) => handleSearch(e.target.value)}
               value={search}
@@ -104,7 +106,7 @@ function BodyPartExercises() {
         </div>
 
         <div className={`p-4 bg-white border-t ${filterOpen ? 'block' : 'hidden'}`}>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-2 md:gap-4">
             {categories.map((cat) => (
               <Fragment key={cat}>
                 <input
@@ -114,17 +116,17 @@ function BodyPartExercises() {
                   onChange={(e) => {
                     if (e.target.checked) {
                       setCategory(cat);
-                      setCurrentPage(1); // Reset to first page when changing category
+                      setCurrentPage(1);
                     } else {
                       setCategory("");
-                      setCurrentPage(1); // Reset to first page when clearing category
+                      setCurrentPage(1);
                     }
                   }}
                   className="hidden"
                 />
                 <label
                   htmlFor={cat}
-                  className={`px-4 py-2 rounded-lg cursor-pointer ${
+                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${
                     category === cat
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -138,7 +140,7 @@ function BodyPartExercises() {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 pb-24 md:pb-4">
         {localLoading ? (
           <div className="flex justify-center items-center min-h-[300px]">
             <Spinner />
@@ -166,7 +168,7 @@ function BodyPartExercises() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg ${
                     currentPage === 1
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
@@ -174,13 +176,13 @@ function BodyPartExercises() {
                 >
                   Previous
                 </button>
-                <span className="text-gray-600">
+                <span className="text-sm md:text-base text-gray-600">
                   Page {currentPage} of {pagination.totalPages}
                 </span>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === pagination.totalPages}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg ${
                     currentPage === pagination.totalPages
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
@@ -194,9 +196,9 @@ function BodyPartExercises() {
         ) : (
           <div className="flex justify-center items-center min-h-[300px] p-8 bg-white rounded-lg shadow-sm">
             <div className="text-center">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No Exercises Found</h3>
-              <p className="text-gray-600 mb-1">We couldn't find any exercises for {bodyPart}.</p>
-              <p className="text-gray-600">Try selecting a different body part or category.</p>
+              <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">No Exercises Found</h3>
+              <p className="text-sm md:text-base text-gray-600 mb-1">We couldn't find any exercises for {bodyPart}.</p>
+              <p className="text-sm md:text-base text-gray-600">Try selecting a different body part or category.</p>
             </div>
           </div>
         )}
