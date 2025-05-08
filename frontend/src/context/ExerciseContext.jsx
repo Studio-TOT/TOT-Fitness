@@ -49,8 +49,8 @@ export function ExerciseProvider({ children }) {
       setExercises(data || []);
     } catch (err) {
       setError(err.message.includes("ECONNREFUSED") 
-        ? "Unable to connect to the database. Please try again later."
-        : err.message
+          ? "Unable to connect to the database. Please try again later."
+          : err.message
       );
       setExercises([]);
     } finally {
@@ -84,10 +84,10 @@ export function ExerciseProvider({ children }) {
       const response = await fetch(
         `${apiUrl}/api/exercises/bodypart/${bodyPart}?${queryParams.toString()}`,
         {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
         }
       );
       

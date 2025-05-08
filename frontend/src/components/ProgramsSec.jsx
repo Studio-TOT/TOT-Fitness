@@ -13,9 +13,9 @@ import sm1lock from "../assets/sm1lock.png";
 
 function ProgramsSec() {
   return (
-    <div className="ProgramSection" id="prog">
+    <div className="m-2.5 p-4 md:m-10 md:flex md:flex-row md:flex-wrap md:justify-between" id="prog">
       <div className="programtext">
-        <h2 className="ProgramsTit">Explore our programs</h2>
+        <h2 className="my-8 text-[1.6rem] md:text-[2.8rem] mb-[30px]">Explore our programs</h2>
         <div className="Description">
           {" "}
           Do you want to reach your fitness goals ? {"\n"} {"\n"} We have

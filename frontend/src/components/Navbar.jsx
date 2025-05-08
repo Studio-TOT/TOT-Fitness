@@ -97,7 +97,7 @@ function Navbar({ isTransparent = false }) {
       </nav>
       <nav className={navBackground}>
         <Link to="/">
-          <p>WILD FITNESS CLUB</p>
+          <p>TOT FITNESS CLUB</p>
         </Link>
         <ul>
           <li>

@@ -295,7 +295,7 @@ export default function Programs() {
             <Link to="/" onClick={handleNav}>
               <img className="backarrow" src={backarrow} alt="backarrow" />
             </Link>
-            <h2 className="prog-title">Our programs</h2>
+            <h2 className="mx-12 my-8 text-[3vw] font-primary mb-[30px]">Our programs</h2>
           </div>
         </div>
         <div className="programimage">

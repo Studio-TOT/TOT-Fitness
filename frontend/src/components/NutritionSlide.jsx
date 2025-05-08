@@ -9,8 +9,11 @@ import { Pagination } from "swiper";
 function NutritionSlide({ data }) {
   return (
     <div key={data?.idMeal}>
-      <section className="NutritionSection">
-        <h2>Nutrition</h2>
+      <section className="NutritionSection py-24 px-6 md:px-12">
+        <div className="my-8 text-[1.6rem] md:text-[2.8rem] mb-[30px] ">
+          <h2>Explore our</h2>
+          <h2>nutrition guide</h2>
+        </div>
         <div className="swipper">
           <Swiper
             spaceBetween={30}
@@ -18,7 +21,6 @@ function NutritionSlide({ data }) {
               dynamicBullets: true,
             }}
             modules={[Pagination]}
-            className="NutritionSlide"
           >
             {data &&
               data

@@ -31,10 +31,6 @@ body {
 .NutritionSection {
     clip-path: polygon(0% 10%, 100% 0%, 100% 100%, 0 100%);
     background-color: $color_5;
-    padding: 15% 10% 10% 10%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .swipper {
@@ -47,14 +43,6 @@ body {
     height: 20%;
     border-radius: 15%;
     margin: 3%;
-}
-
-.NutritionSection h2 {
-    font-family: $font-family_1;
-    margin: 5% 0;
-    font-weight: 600;
-    text-align: start;
-    align-self: flex-start;
 }
 
 .NutritionSection h3 {

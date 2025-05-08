@@ -138,11 +138,10 @@ function BodyPartExercises() {
                     />
                     <label
                       htmlFor={cat}
-                      className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${
-                        category === cat
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${category === cat
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                     >
                       {cat}
                     </label>
@@ -174,11 +173,10 @@ function BodyPartExercises() {
                     />
                     <label
                       htmlFor={`diff-${diff}`}
-                      className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${
-                        difficulty === diff
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${difficulty === diff
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                     >
                       {diff}
                     </label>
@@ -219,11 +217,10 @@ function BodyPartExercises() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg ${
-                    currentPage === 1
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg ${currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
                 >
                   Previous
                 </button>
@@ -233,11 +230,10 @@ function BodyPartExercises() {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === pagination.totalPages}
-                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg ${
-                    currentPage === pagination.totalPages
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg ${currentPage === pagination.totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
                 >
                   Next
                 </button>

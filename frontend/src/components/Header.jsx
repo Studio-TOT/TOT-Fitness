@@ -5,7 +5,7 @@ function Header() {
   return (
     <div>
       <header>
-        <h1>Wild Fitness Club</h1>
+        <h1>TOT Fitness Club</h1>
         <div>
           <h2>
             Get into the <br /> fitness journey
