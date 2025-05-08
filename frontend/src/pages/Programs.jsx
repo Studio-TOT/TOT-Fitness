@@ -309,18 +309,24 @@ export default function Programs() {
                 onChange={() => handleWeekChange(index)}
                 sx={{
                   backgroundColor: "white !important",
-                  borderRadius: "16px !important",
+                  borderRadius: "12px !important",
                   border: "none",
                   color: "black",
-                  margin: "8px auto !important",
-                  width: "95%",
+                  margin: "4px 0 !important",
+                  width: "100%",
                   fontFamily: "Arial !important",
-                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+                  boxShadow: "0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
                   transition: "all 0.3s ease-in-out",
                   "&:hover": {
                     transform: "translateY(-2px)",
                     boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
                   },
+                  "@media (min-width: 768px)": {
+                    width: "95%",
+                    margin: "8px auto !important",
+                    borderRadius: "16px !important",
+                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+                  }
                 }}
               >
                 <AccordionSummary
@@ -328,30 +334,36 @@ export default function Programs() {
                   aria-controls="panel1a-content"
                   id="panel1a-header"
                   className="bg-white hover:bg-gray-50 transition-colors duration-200"
+                  sx={{
+                    padding: '8px 12px',
+                    '@media (min-width: 768px)': {
+                      padding: '12px 16px'
+                    }
+                  }}
                 >
                   <div className="flex items-center w-full">
-                    <div className="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full mr-3">
-                      <span className="text-sm font-semibold">{index + 1}</span>
+                    <div className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 bg-blue-500 text-white rounded-full mr-2 md:mr-3">
+                      <span className="text-xs md:text-sm font-semibold">{index + 1}</span>
                     </div>
                     <div>
-                      <p className="text-lg font-semibold text-gray-800">Week {index + 1}</p>
-                      <p className="text-sm text-gray-500">3 days of training</p>
+                      <p className="text-base md:text-lg font-semibold text-gray-800">Week {index + 1}</p>
+                      <p className="text-xs md:text-sm text-gray-500">3 days of training</p>
                     </div>
                   </div>
                 </AccordionSummary>
                 <AccordionDetails className="p-0">
-                  <div className="p-4 bg-gray-50">
-                  {dayArr.map((day, dayIndex) => (
+                  <div className="p-2 md:p-4 bg-gray-50">
+                    {dayArr.map((day, dayIndex) => (
                       <div 
                         key={`day-${day}`}
-                        className="mb-4 last:mb-0"
+                        className="mb-2 md:mb-4 last:mb-0"
                       >
-                    <Day
-                      day={day}
+                        <Day
+                          day={day}
                           exercises={program[index]?.[dayIndex] || []}
-                    />
+                        />
                       </div>
-                  ))}
+                    ))}
                   </div>
                 </AccordionDetails>
               </Accordion>

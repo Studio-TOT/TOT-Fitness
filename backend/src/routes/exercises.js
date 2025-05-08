@@ -155,11 +155,11 @@ router.get('/', async (req, res) => {
             'name_en_us', me.name_en_us
           )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
           json_agg(DISTINCT jsonb_build_object(
-            'id', s.id,
-            'order', s.order_num,
-            'text', s.text,
-            'text_en_us', s.text_en_us
-          )) FILTER (WHERE s.id IS NOT NULL) as steps,
+            'id', es.id,
+            'order', es.order_num,
+            'text', es.text,
+            'text_en_us', es.text_en_us
+          )) FILTER (WHERE es.id IS NOT NULL) as steps,
           json_agg(DISTINCT jsonb_build_object(
             'id', i.id,
             'gender', i.gender,
@@ -174,13 +174,11 @@ router.get('/', async (req, res) => {
         LEFT JOIN muscles m ON em.muscle_id = m.id
         LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
         LEFT JOIN categories c ON ec.category_id = c.id
-        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id -- Alias for details related to force/mechanic
+        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id
         LEFT JOIN forces f ON ed2.force_id = f.id
         LEFT JOIN mechanics me ON ed2.mechanic_id = me.id
         LEFT JOIN exercise_steps es ON e.id = es.exercise_id
-        LEFT JOIN steps s ON es.step_id = s.id
-        LEFT JOIN exercise_images ei ON e.id = ei.exercise_id
-        LEFT JOIN images i ON ei.image_id = i.id
+        LEFT JOIN exercise_images i ON e.id = i.exercise_id
         GROUP BY e.id, e.name, e.description, e.name_en_us, e.name_alternative, e.slug, e.description_en_us, e.need_warmup, e.advanced_weight, e.featured_weight, e.weight, e.impact, e.use_youtube_links, e.featured, e.sponsered_link, e.status, e.created_at, e.updated_at
         ORDER BY e.name;
       `);
@@ -364,11 +362,11 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
             'name_en_us', me.name_en_us
           )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
           json_agg(DISTINCT jsonb_build_object(
-            'id', s.id,
-            'order', s.order_num,
-            'text', s.text,
-            'text_en_us', s.text_en_us
-          )) FILTER (WHERE s.id IS NOT NULL) as steps,
+            'id', es.id,
+            'order', es.order_num,
+            'text', es.text,
+            'text_en_us', es.text_en_us
+          )) FILTER (WHERE es.id IS NOT NULL) as steps,
           json_agg(DISTINCT jsonb_build_object(
             'id', i.id,
             'gender', i.gender,
@@ -388,10 +386,10 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
           FROM exercise_details ed_sub
           JOIN difficulties d ON ed_sub.difficulty_id = d.id
         ) ed_diff ON e.id = ed_diff.exercise_id
-        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id -- Alias for details related to force/mechanic
+        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id
         LEFT JOIN forces f ON ed2.force_id = f.id
         LEFT JOIN mechanics me ON ed2.mechanic_id = me.id
-        LEFT JOIN exercise_steps s ON e.id = s.exercise_id
+        LEFT JOIN exercise_steps es ON e.id = es.exercise_id
         LEFT JOIN exercise_images i ON e.id = i.exercise_id
         WHERE (m.name ILIKE $1 OR m.name_en_us ILIKE $1)
       `;

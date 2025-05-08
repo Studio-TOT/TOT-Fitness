@@ -18,21 +18,22 @@ function Day({ day, exercises = [] }) {
   }
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm">
-      <div className="flex items-center mb-4">
+    <div className="bg-white rounded-lg p-2 md:p-4 shadow-sm">
+      <div className="flex items-center mb-3 md:mb-4">
         <CalendarTodayIcon className="text-blue-500 mr-2" />
         <h3 className="text-lg font-semibold text-gray-800">Day {day}</h3>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-2 md:space-y-4 -mx-2 md:mx-0">
         {exercises.map((exercise) => (
-          <Exercise
-            key={exercise?.id}
-            name={exercise?.exercise_name}
-            video={exercise?.images?.male?.[0]?.branded_video || exercise?.images?.female?.[0]?.branded_video}
-            description={exercise?.steps}
-            category={exercise?.category}
-            difficulty={exercise?.difficulty}
-          />
+          <div key={exercise?.id} className="px-2 md:px-0">
+            <Exercise
+              name={exercise?.exercise_name}
+              video={exercise?.images?.male?.[0]?.branded_video || exercise?.images?.female?.[0]?.branded_video}
+              description={exercise?.steps}
+              category={exercise?.category}
+              difficulty={exercise?.difficulty}
+            />
+          </div>
         ))}
       </div>
     </div>

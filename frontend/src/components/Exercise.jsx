@@ -90,12 +90,12 @@ function Exercise({
   const difficultyStyles = getDifficultyColor(difficulty);
 
   return (
-    <div className="w-full max-w-4xl mx-auto my-2 md:my-4">
+    <div className="w-full my-1 md:my-2">
       <Accordion
         sx={{
-          borderRadius: "16px !important",
+          borderRadius: "12px !important",
           border: "none",
-          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+          boxShadow: "0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
           overflow: "hidden",
         }}
       >
@@ -104,21 +104,28 @@ function Exercise({
           aria-controls="panel1a-content"
           id="panel1a-header"
           className="bg-white hover:bg-gray-50 transition-colors duration-200"
+          sx={{
+            padding: '6px 12px',
+            '& .MuiAccordionSummary-content': {
+              margin: 0,
+              minWidth: 0
+            }
+          }}
         >
-          <div className="flex items-center justify-between w-full">
-           <div className="flex items-center gap-2"> 
-            <Typography className="text-base md:text-lg font-semibold text-gray-800">
-              {name}
-            </Typography>
+          <div className="flex items-center w-full min-w-0">
+            <div className="flex-1 min-w-0 mr-1.5">
+              <Typography className="text-sm md:text-base font-semibold text-gray-800 truncate">
+                {name}
+              </Typography>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
               {category && (
-                <span className="px-2 md:px-3 py-0.5 md:py-1 text-xs md:text-sm bg-blue-100 text-blue-800 rounded-full">
+                <span className="px-1 py-0.5 text-[10px] bg-blue-100 text-blue-800 rounded-full whitespace-nowrap">
                   {category}
                 </span>
               )}
-            </div>
-            <div className="flex items-center gap-2 ml-2 md:ml-3">
               {difficulty && (
-                <span className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded-md ${difficultyStyles.bg} ${difficultyStyles.text} ${difficultyStyles.border}`}>
+                <span className={`flex items-center gap-0.5 px-1 py-0.5 text-[10px] rounded-md ${difficultyStyles.bg} ${difficultyStyles.text} ${difficultyStyles.border} whitespace-nowrap`}>
                   {difficultyStyles.icon}
                   <span className="font-normal">{difficulty}</span>
                 </span>
@@ -127,7 +134,7 @@ function Exercise({
           </div>
         </AccordionSummary>
         <AccordionDetails className="p-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 p-3 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 p-2 md:p-4">
             {/* Video Section */}
             <div className="relative rounded-lg overflow-hidden bg-gray-100">
               {video ? (
@@ -145,35 +152,35 @@ function Exercise({
                   </video>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-32 md:h-48 text-gray-500">
-                  <PlayCircleOutlineIcon className="text-3xl md:text-4xl mb-2" />
-                  <p className="text-sm md:text-base">No video available</p>
+                <div className="flex flex-col items-center justify-center h-24 md:h-32 text-gray-500">
+                  <PlayCircleOutlineIcon className="text-2xl md:text-3xl mb-1" />
+                  <p className="text-xs md:text-sm">No video available</p>
                 </div>
               )}
             </div>
 
             {/* Instructions Section */}
-            <div className="bg-white rounded-lg p-3 md:p-4">
-              <div className="flex items-center mb-3 md:mb-4">
-                <InfoOutlinedIcon className="text-blue-500 mr-2 text-lg md:text-xl" />
-                <h3 className="text-base md:text-lg font-semibold text-gray-800">Instructions</h3>
+            <div className="bg-white rounded-lg p-2 md:p-3">
+              <div className="flex items-center mb-2 md:mb-3">
+                <InfoOutlinedIcon className="text-blue-500 mr-1.5 text-base md:text-lg" />
+                <h3 className="text-sm md:text-base font-semibold text-gray-800">Instructions</h3>
               </div>
-              <div className="space-y-2 md:space-y-3">
+              <div className="space-y-1.5 md:space-y-2">
                 {description && description.length > 0 ? (
                   description.map((step, index) => (
                     <div 
                       key={`${name}-step-${index}`}
-                      className="flex items-start p-2 md:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                      className="flex items-start p-1.5 md:p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                     >
-                      <span className="flex-shrink-0 w-5 h-5 md:w-6 md:h-6 flex items-center justify-center bg-blue-500 text-white rounded-full text-xs md:text-sm font-medium mr-2 md:mr-3">
+                      <span className="flex-shrink-0 w-4 h-4 md:w-5 md:h-5 flex items-center justify-center bg-blue-500 text-white rounded-full text-xs font-medium mr-1.5 md:mr-2">
                         {index + 1}
                       </span>
-                      <p className="text-sm md:text-base text-gray-700">{step}</p>
+                      <p className="text-xs md:text-sm text-gray-700">{step}</p>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center text-gray-500 py-3 md:py-4">
-                    <p className="text-sm md:text-base">No instructions available</p>
+                  <div className="text-center text-gray-500 py-2 md:py-3">
+                    <p className="text-xs md:text-sm">No instructions available</p>
                   </div>
                 )}
               </div>
