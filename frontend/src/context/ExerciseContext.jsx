@@ -58,7 +58,7 @@ export function ExerciseProvider({ children }) {
     }
   }, [apiUrl]);
 
-  const fetchExercisesByBodyPart = useCallback(async (bodyPart, category, page = 1, limit = 10, search = '') => {
+  const fetchExercisesByBodyPart = useCallback(async (bodyPart, category, page = 1, limit = 10, search = '', difficulty = '') => {
     if (!apiUrl) {
       setError('API URL is not configured. Please check your environment variables.');
       return;
@@ -76,6 +76,9 @@ export function ExerciseProvider({ children }) {
       }
       if (search) {
         queryParams.append('search', search);
+      }
+      if (difficulty) {
+        queryParams.append('difficulty', difficulty);
       }
 
       const response = await fetch(

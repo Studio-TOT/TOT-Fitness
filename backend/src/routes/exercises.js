@@ -92,7 +92,6 @@ const transformExercise = (exercise) => {
     .filter(i => i && i.gender === 'female' && i.branded_video)
     .sort((a, b) => a.order - b.order);
 
- 
   return {
     id: exercise.id,
     exercise_name: exercise.name,
@@ -282,10 +281,10 @@ router.get('/muscle/:muscleName', async (req, res) => {
 router.get('/bodypart/:bodyPart', async (req, res) => {
   try {
     const { bodyPart } = req.params;
-    const { category, page = 1, limit = 20, search = '' } = req.query;
+    const { category, page = 1, limit = 20, search = '', difficulty = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    const cacheKey = `bodypart_${bodyPart}${category ? `_${category}` : ''}_page${page}_limit${limit}_search${search}`;
+    const cacheKey = `bodypart_${bodyPart}${category ? `_${category}` : ''}${difficulty ? `_${difficulty}` : ''}_page${page}_limit${limit}_search${search}`;
 
     // Check cache first
     const cachedData = cache.get(cacheKey);
@@ -303,14 +302,21 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
         LEFT JOIN muscles m ON em.muscle_id = m.id
         LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
         LEFT JOIN categories c ON ec.category_id = c.id
+        LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
+        LEFT JOIN difficulties d ON ed.difficulty_id = d.id
         WHERE (m.name ILIKE $1 OR m.name_en_us ILIKE $1)
       `;
 
       const countParams = [`%${bodyPart}%`];
 
       if (category) {
-        countQuery += ` AND (c.name ILIKE $2 OR c.name_en_us ILIKE $2)`;
+        countQuery += ` AND (c.name ILIKE $${countParams.length + 1} OR c.name_en_us ILIKE $${countParams.length + 1})`;
         countParams.push(`%${category}%`);
+      }
+
+      if (difficulty) {
+        countQuery += ` AND d.name ILIKE $${countParams.length + 1}`;
+        countParams.push(`%${difficulty}%`);
       }
 
       if (search) {
@@ -324,7 +330,7 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
       if (total === 0) {
         return res.status(404).json({
           error: 'No exercises found',
-          details: `No exercises found for body part: ${bodyPart}${category ? ` and category: ${category}` : ''}${search ? ` and search: ${search}` : ''}`
+          details: `No exercises found for body part: ${bodyPart}${category ? ` and category: ${category}` : ''}${difficulty ? ` and difficulty: ${difficulty}` : ''}${search ? ` and search: ${search}` : ''}`
         });
       }
 
@@ -395,6 +401,11 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
       if (category) {
         query += ` AND (c.name ILIKE $${queryParams.length + 1} OR c.name_en_us ILIKE $${queryParams.length + 1})`;
         queryParams.push(`%${category}%`);
+      }
+
+      if (difficulty) {
+        query += ` AND ed_diff.difficulty_name ILIKE $${queryParams.length + 1}`;
+        queryParams.push(`%${difficulty}%`);
       }
 
       if (search) {

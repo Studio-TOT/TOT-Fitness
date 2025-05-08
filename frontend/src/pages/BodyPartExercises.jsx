@@ -15,6 +15,7 @@ function BodyPartExercises() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [difficulty, setDifficulty] = useState("");
 
   const categories = [
     "Barbell",
@@ -27,6 +28,13 @@ function BodyPartExercises() {
     "TRX",
     "Band",
     "Cables",
+  ];
+
+  const difficulties = [
+    "Beginner",
+    "Novice",
+    "Intermediate",
+    "Advanced"
   ];
 
   const nav = useNavigate();
@@ -45,12 +53,12 @@ function BodyPartExercises() {
   useEffect(() => {
     if (bodyPart) {
       setLocalLoading(true);
-      fetchExercisesByBodyPart(bodyPart, category, currentPage, 10, search)
+      fetchExercisesByBodyPart(bodyPart, category, currentPage, 10, search, difficulty)
         .finally(() => {
           setLocalLoading(false);
         });
     }
-  }, [bodyPart, category, currentPage, search, fetchExercisesByBodyPart]);
+  }, [bodyPart, category, currentPage, search, difficulty, fetchExercisesByBodyPart]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -106,36 +114,78 @@ function BodyPartExercises() {
         </div>
 
         <div className={`p-4 bg-white border-t ${filterOpen ? 'block' : 'hidden'}`}>
-          <div className="flex flex-wrap gap-2 md:gap-4">
-            {categories.map((cat) => (
-              <Fragment key={cat}>
-                <input
-                  type="checkbox"
-                  id={cat}
-                  checked={category === cat}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setCategory(cat);
-                      setCurrentPage(1);
-                    } else {
-                      setCategory("");
-                      setCurrentPage(1);
-                    }
-                  }}
-                  className="hidden"
-                />
-                <label
-                  htmlFor={cat}
-                  className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${
-                    category === cat
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {cat}
-                </label>
-              </Fragment>
-            ))}
+          <div className="space-y-4">
+            {/* Category Filters */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Categories</h3>
+              <div className="flex flex-wrap gap-2 md:gap-4">
+                {categories.map((cat) => (
+                  <Fragment key={cat}>
+                    <input
+                      type="checkbox"
+                      id={cat}
+                      checked={category === cat}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setCategory(cat);
+                          setCurrentPage(1);
+                        } else {
+                          setCategory("");
+                          setCurrentPage(1);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor={cat}
+                      className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${
+                        category === cat
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {cat}
+                    </label>
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* Difficulty Filters */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Difficulty</h3>
+              <div className="flex flex-wrap gap-2 md:gap-4">
+                {difficulties.map((diff) => (
+                  <Fragment key={diff}>
+                    <input
+                      type="checkbox"
+                      id={`diff-${diff}`}
+                      checked={difficulty === diff}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setDifficulty(diff);
+                          setCurrentPage(1);
+                        } else {
+                          setDifficulty("");
+                          setCurrentPage(1);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor={`diff-${diff}`}
+                      className={`px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg cursor-pointer ${
+                        difficulty === diff
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {diff}
+                    </label>
+                  </Fragment>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
