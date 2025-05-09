@@ -20,7 +20,7 @@ function Subscription() {
           <Link to="/" onClick={handleNav}>
             <img className="backarrow" src={backarrow} alt="backarrow" />
           </Link>{" "}
-          <h2>Chose your subscription</h2>
+          <h2>Choose your subscription</h2>
         </div>
 
         <p>
@@ -29,11 +29,16 @@ function Subscription() {
         </p>
       </div>
       <div>
-        <SubscriptionCard rythm="Monthly" price="$4.99 / month" />
+        <SubscriptionCard
+          rythm="Monthly"
+          price="$4.99 / month"
+          priceId={import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID}
+        />
         <SubscriptionCard
           rythm="Annual"
           price="$49.99 / year"
           save="save $9.89"
+          priceId={import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID}
         />
       </div>
     </div>

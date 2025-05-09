@@ -10,6 +10,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const exercisesRouter = require('./src/routes/exercises');
+const { createCheckoutSession, handleWebhook } = require('./src/stripe');
 
 // Database connection pool configuration
 console.log('Database connection configuration:');
@@ -102,6 +103,42 @@ app.get('/health', (req, res) => {
     database: process.env.NODE_ENV === 'production' ? 'production' : 'local',
     timestamp: new Date().toISOString()
   });
+});
+
+// Stripe webhook endpoint
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    await handleWebhook(event);
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Error handling webhook:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create checkout session
+app.post('/create-checkout-session', async (req, res) => {
+  try {
+    const { priceId, userId } = req.body;
+    const session = await createCheckoutSession(priceId, userId);
+    res.json({ sessionId: session.id });
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // 404 handler
