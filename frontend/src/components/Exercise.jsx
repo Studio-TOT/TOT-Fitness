@@ -13,12 +13,12 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarHalfIcon from '@mui/icons-material/StarHalf';
 import StarOutlineIcon from '@mui/icons-material/StarOutline';
 
-function Exercise({ 
-  name, 
-  video = null, 
-  description = [], 
+function Exercise({
+  name,
+  video = null,
+  description = [],
   category = null,
-  difficulty = null 
+  difficulty = null
 }) {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -139,11 +139,11 @@ function Exercise({
             <div className="relative rounded-lg overflow-hidden bg-gray-100">
               {video ? (
                 <div className="relative aspect-video">
-                  <video 
-                    controls 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
+                  <video
+                    controls
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
                     muted
                     className="w-full h-full object-cover"
                   >
@@ -168,7 +168,7 @@ function Exercise({
               <div className="space-y-1.5 md:space-y-2">
                 {description && description.length > 0 ? (
                   description.map((step, index) => (
-                    <div 
+                    <div
                       key={`${name}-step-${index}`}
                       className="flex items-start p-1.5 md:p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                     >

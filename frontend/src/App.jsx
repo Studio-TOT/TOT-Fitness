@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import nutrition from "./data";
 import { ExerciseProvider } from "./context/ExerciseContext";
+import { AuthProvider } from "./context/AuthContext";
 
 // Layout component to wrap pages with Navbar and Footer
 function Layout({ children, isTransparentNav }) {
@@ -33,74 +34,76 @@ if (!import.meta.env.VITE_API_URL) {
 
 function App() {
   return (
-    <ExerciseProvider>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Layout isTransparentNav>
-              <Home data={nutrition} />
-            </Layout>
-          }
-        />
-        <Route
-          path="/Nutritionpage"
-          element={
-            <Layout>
-              <NutritionPage data={nutrition} />
-            </Layout>
-          }
-        />
-        <Route
-          path="/Nutritionpage/:idMeal"
-          element={
-            <Layout>
-              <HubertEats data={nutrition} />
-            </Layout>
-          }
-        />
-        <Route
-          path="/:exercise"
-          element={
-            <Layout>
-              <BodyPartExercises />
-            </Layout>
-          }
-        />
-        <Route
-          path="/subscription"
-          element={
-            <Layout>
-              <Subscription />
-            </Layout>
-          }
-        />
-        <Route
-          path="/subscription/success"
-          element={
-            <Layout>
-              <SubscriptionSuccess />
-            </Layout>
-          }
-        />
-        <Route
-          path="/programs/:programType"
-          element={
-            <Layout>
-              <Programs />
-            </Layout>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <Layout>
-              <Dashboard />
-            </Layout>
-          }
-        />
-      </Routes>
-    </ExerciseProvider>
+    <AuthProvider>
+      <ExerciseProvider>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Layout isTransparentNav>
+                <Home data={nutrition} />
+              </Layout>
+            }
+          />
+          <Route
+            path="/Nutritionpage"
+            element={
+              <Layout>
+                <NutritionPage data={nutrition} />
+              </Layout>
+            }
+          />
+          <Route
+            path="/Nutritionpage/:idMeal"
+            element={
+              <Layout>
+                <HubertEats data={nutrition} />
+              </Layout>
+            }
+          />
+          <Route
+            path="/:exercise"
+            element={
+              <Layout>
+                <BodyPartExercises />
+              </Layout>
+            }
+          />
+          <Route
+            path="/subscription"
+            element={
+              <Layout>
+                <Subscription />
+              </Layout>
+            }
+          />
+          <Route
+            path="/subscription/success"
+            element={
+              <Layout>
+                <SubscriptionSuccess />
+              </Layout>
+            }
+          />
+          <Route
+            path="/programs/:programType"
+            element={
+              <Layout>
+                <Programs />
+              </Layout>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <Layout>
+                <Dashboard />
+              </Layout>
+            }
+          />
+        </Routes>
+      </ExerciseProvider>
+    </AuthProvider>
   );
 }
 

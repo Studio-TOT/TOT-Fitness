@@ -40,17 +40,17 @@ export function ExerciseProvider({ children }) {
           'Content-Type': 'application/json',
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setExercises(data || []);
     } catch (err) {
-      setError(err.message.includes("ECONNREFUSED") 
-          ? "Unable to connect to the database. Please try again later."
-          : err.message
+      setError(err.message.includes("ECONNREFUSED")
+        ? "Unable to connect to the database. Please try again later."
+        : err.message
       );
       setExercises([]);
     } finally {
@@ -84,13 +84,13 @@ export function ExerciseProvider({ children }) {
       const response = await fetch(
         `${apiUrl}/api/exercises/bodypart/${bodyPart}?${queryParams.toString()}`,
         {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         }
       );
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 404) {
@@ -107,7 +107,7 @@ export function ExerciseProvider({ children }) {
           errorData.details || `HTTP error! status: ${response.status}`
         );
       }
-      
+
       const data = await response.json();
       setExercises(data.data || []);
       setPagination(data.pagination || {
@@ -140,10 +140,10 @@ export function ExerciseProvider({ children }) {
       const primary = exercise.target?.Primary || [];
       const secondary = exercise.target?.Secondary || [];
       const tertiary = exercise.target?.Tertiary || [];
-      
+
       return primary.some(muscle => muscle.toLowerCase() === muscleName.toLowerCase()) ||
-             secondary.some(muscle => muscle.toLowerCase() === muscleName.toLowerCase()) ||
-             tertiary.some(muscle => muscle.toLowerCase() === muscleName.toLowerCase());
+        secondary.some(muscle => muscle.toLowerCase() === muscleName.toLowerCase()) ||
+        tertiary.some(muscle => muscle.toLowerCase() === muscleName.toLowerCase());
     });
   }, []);
 

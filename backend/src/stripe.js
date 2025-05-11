@@ -1,4 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const userModel = require('./models/user');
+const subscriptionModel = require('./models/subscription');
 
 // Create subscription plans
 const createSubscriptionPlans = async () => {
@@ -67,15 +69,48 @@ const createCheckoutSession = async (priceId, userId) => {
 const handleWebhook = async (event) => {
     try {
         switch (event.type) {
-            case 'checkout.session.completed':
+            case 'checkout.session.completed': {
                 const session = event.data.object;
-                // Update user's subscription status in your database
-                // You'll need to implement this based on your database schema
+                const customerId = session.customer;
+                const email = session.customer_details?.email;
+                const subscriptionId = session.subscription;
+                // Find or create user
+                let user = await userModel.findUserByStripeCustomerId(customerId);
+                if (!user && email) {
+                    user = await userModel.findUserByEmail(email);
+                    if (!user) {
+                        user = await userModel.createUser(email, customerId);
+                    }
+                }
+                if (user) {
+                    await userModel.setPremiumStatus(user.id, true);
+                    // Get subscription details from Stripe
+                    const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
+                    await subscriptionModel.createSubscription(
+                        user.id,
+                        subscriptionId,
+                        stripeSub.status,
+                        new Date(stripeSub.current_period_end * 1000)
+                    );
+                }
                 break;
-            case 'customer.subscription.deleted':
+            }
+            case 'customer.subscription.deleted': {
                 const subscription = event.data.object;
-                // Handle subscription cancellation
+                const stripeSubscriptionId = subscription.id;
+                // Find subscription in DB
+                const sub = await subscriptionModel.findByStripeSubscriptionId(stripeSubscriptionId);
+                if (sub) {
+                    await subscriptionModel.updateSubscription(
+                        stripeSubscriptionId,
+                        subscription.status,
+                        new Date(subscription.current_period_end * 1000)
+                    );
+                    // Set user as not premium
+                    await userModel.setPremiumStatus(sub.user_id, false);
+                }
                 break;
+            }
             default:
                 console.log(`Unhandled event type ${event.type}`);
         }

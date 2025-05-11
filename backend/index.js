@@ -11,6 +11,8 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const exercisesRouter = require('./src/routes/exercises');
 const { createCheckoutSession, handleWebhook } = require('./src/stripe');
+const userRouter = require('./src/routes/user');
+const authRouter = require('./src/routes/auth');
 
 // Database connection pool configuration
 console.log('Database connection configuration:');
@@ -94,6 +96,12 @@ app.use((req, res, next) => {
 
 // Exercise routes
 app.use('/api/exercises', exercisesRouter);
+
+// User routes
+app.use('/api/user', userRouter);
+
+// Auth routes
+app.use('/api/auth', authRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

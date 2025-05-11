@@ -10,8 +10,10 @@ import fb1 from "../assets/fb1.png";
 import mb1 from "../assets/mb1.png";
 import ct1lock from "../assets/ct1lock.png";
 import sm1lock from "../assets/sm1lock.png";
+import { useAuth } from '../context/AuthContext';
 
 function ProgramsSec() {
+  const { isPremium } = useAuth();
   return (
     <div className="m-2.5 p-4 md:m-10 md:flex md:flex-row md:flex-wrap md:justify-between" id="prog">
       <div className="programtext">
@@ -44,10 +46,14 @@ function ProgramsSec() {
             <img src={bw1} alt="bw1" width="225" height="225" />
           </Link>
         </div>
-        <div className="cardbp1">
-          <Link className="linkcard" to="/programs/bootypump">
-            {" "}
+        <div className="cardbp1 relative">
+          <Link className="linkcard" to={isPremium() ? "/programs/bootypump" : "/subscription"}>
             <img src={bp1} alt="bp1" width="225" height="225" />
+            {!isPremium() && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center text-white text-lg font-bold rounded">
+                Premium
+              </div>
+            )}
           </Link>
         </div>
         <div className="cardfb1">
@@ -56,20 +62,22 @@ function ProgramsSec() {
             <img src={fb1} alt="fb1" width="225" height="225" />
           </Link>
         </div>
-        <div className="cardmb1">
-          {" "}
-          <Link className="linkcard" to="/programs/musclebuilding">
+        <div className="cardmb1 relative">
+          <Link className="linkcard" to={isPremium() ? "/programs/musclebuilding" : "/subscription"}>
             <img src={mb1} alt="mb1" width="225" height="225" />
+            {!isPremium() && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center text-white text-lg font-bold rounded">
+                Premium
+              </div>
+            )}
           </Link>
         </div>
-        <div className="cardct1">
-          {" "}
+        <div className="cardct1 relative">
           <Link className="linkcard" to="/subscription">
             <img src={ct1lock} alt="ct1lock" width="225" height="225" />
           </Link>
         </div>
-        <div className="cardsm1">
-          {" "}
+        <div className="cardsm1 relative">
           <Link className="linkcard" to="/subscription">
             <img src={sm1lock} alt="sm1lock" width="225" height="225" />
           </Link>

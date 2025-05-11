@@ -354,7 +354,7 @@ export default function Programs() {
                 <AccordionDetails className="p-0">
                   <div className="p-2 md:p-4 bg-gray-50">
                     {dayArr.map((day, dayIndex) => (
-                      <div 
+                      <div
                         key={`day-${day}`}
                         className="mb-2 md:mb-4 last:mb-0"
                       >

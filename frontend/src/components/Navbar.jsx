@@ -1,28 +1,32 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Link, useNavigate } from "react-router-dom";
-import dash from "../assets/dashboard.png";
-import prog from "../assets/ecrire.png";
-import exo from "../assets/haltere.png";
-import nut from "../assets/plaque.png";
+import { useAuth } from '../context/AuthContext';
+import AuthModal from './AuthModal';
+import navItems from './navItems';
+import DesktopNavbar from './DesktopNavbar';
+import MobileNavbar from './MobileNavbar';
 
 function Navbar({ isTransparent = false }) {
+  const { user, logout } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
   const [navBackground, setNavBackground] = useState("navbar-desktop-scrolled");
-  const handleScroll = () => {
-    const currentScrollY = window.scrollY || 0;
-    if (window.location.pathname === "/" && currentScrollY < 100) {
-      setNavBackground("navbar-desktop");
-    } else {
-      setNavBackground("navbar-desktop navbar-desktop-scrolled");
-    }
-  };
+
   useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY || 0;
+      if (window.location.pathname === "/" && currentScrollY < 100) {
+        setNavBackground("navbar-desktop");
+      } else {
+        setNavBackground("navbar-desktop navbar-desktop-scrolled");
+      }
+    };
     window.addEventListener("scroll", handleScroll);
     handleScroll();
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
   useEffect(() => {
     if (isTransparent) {
       setNavBackground("navbar-desktop");
@@ -30,98 +34,34 @@ function Navbar({ isTransparent = false }) {
     }
     setNavBackground("navbar-desktop navbar-desktop-scrolled");
   }, [isTransparent]);
-  const navigate = useNavigate();
-  const handleScrollToSectionProg = (e) => {
-    e.preventDefault();
-    navigate("/");
-    setTimeout(() => {
-      if (window.innerWidth > 800) {
-        window.scrollTo({
-          top: document.getElementById("prog").offsetTop - 60,
-          behavior: "smooth",
-        });
-      } else {
-        window.scrollTo({
-          top: document.getElementById("prog").offsetTop,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
-  };
-  const handleScrollToSectionEx = (e) => {
-    e.preventDefault();
-    navigate("/");
-    setTimeout(() => {
-      if (window.innerWidth > 800) {
-        window.scrollTo({
-          top: document.getElementById("ex").offsetTop - 80,
-          behavior: "smooth",
-        });
-      } else {
-        window.scrollTo({
-          top: document.getElementById("ex").offsetTop,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
-  };
+
+  // Determine icon color based on navbar background
+  const iconColor = navBackground.includes('navbar-desktop-scrolled') ? 'text-black' : 'text-white';
+
   return (
     <div>
-      <nav className="navbar-mobile">
-        <ul>
-          <li>
-            <Link to="/dashboard">
-              <img src={dash} alt="" width="30px" className="nav-icon" />
-              Dashboard
-            </Link>
-          </li>
-          <li>
-            <a href="/" onClick={handleScrollToSectionProg}>
-              <img src={prog} alt="" width="30px" />
-              Programs
-            </a>
-          </li>
-          <li>
-            <a href="/" onClick={handleScrollToSectionEx}>
-              <img src={exo} alt="" width="30px" />
-              Exercices
-            </a>
-          </li>
-          <li>
-            <Link to="/Nutritionpage">
-              <img src={nut} alt="" width="30px" />
-              Nutrition
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      <nav className={navBackground}>
-        <Link to="/">
-          <p>TOT FITNESS CLUB</p>
-        </Link>
-        <ul>
-          <li>
-            <Link to="/dashboard">Dashboard</Link>
-          </li>
-          <li>
-            <a href="/" onClick={handleScrollToSectionProg}>
-              Programs
-            </a>
-          </li>
-          <li>
-            <a href="/" onClick={handleScrollToSectionEx}>
-              Exercises
-            </a>
-          </li>
-          <li>
-            <Link to="/Nutritionpage">Nutrition</Link>
-          </li>
-        </ul>
-      </nav>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <MobileNavbar
+        navItems={navItems}
+        user={user}
+        logout={logout}
+        setAuthOpen={setAuthOpen}
+        iconColor={iconColor}
+      />
+      <DesktopNavbar
+        navItems={navItems}
+        navBackground={navBackground}
+        user={user}
+        logout={logout}
+        setAuthOpen={setAuthOpen}
+        iconColor={iconColor}
+      />
     </div>
   );
 }
+
 export default Navbar;
+
 Navbar.propTypes = {
   isTransparent: PropTypes.bool,
 };
