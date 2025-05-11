@@ -10,7 +10,7 @@ import MannequinFront from "./MannequinFront";
 
 function MannequinWrapper() {
   return (
-    <>
+    <div id="ex">
       <div className="mx-6 md:mx-12 my-8 text-[1.6rem] md:text-[2.8rem] mb-[30px]">
         <h2>Choose a </h2>
         <h2>muscle group</h2>
@@ -35,7 +35,7 @@ function MannequinWrapper() {
         <MannequinFront className="mannequin-front" />
         <MannequinBack className="mannequin-back" />
       </div>
-    </>
+    </div>
   );
 }
 
