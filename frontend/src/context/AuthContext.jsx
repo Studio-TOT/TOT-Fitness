@@ -31,8 +31,17 @@ export function AuthProvider({ children }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
         });
-        if (!res.ok) throw new Error('Invalid credentials');
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            data = {};
+        }
+        if (!res.ok) {
+            if (res.status === 400) throw new Error('Please enter both email and password.');
+            if (res.status === 401) throw new Error('Incorrect email or password.');
+            throw new Error(data.error || 'Login failed. Please try again.');
+        }
         setToken(data.token);
         localStorage.setItem('jwt', data.token);
         setUser(data.user);
@@ -45,8 +54,17 @@ export function AuthProvider({ children }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
         });
-        if (!res.ok) throw new Error('Registration failed');
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            data = {};
+        }
+        if (!res.ok) {
+            if (res.status === 400) throw new Error('Please enter both email and password.');
+            if (res.status === 409) throw new Error('An account with this email already exists.');
+            throw new Error(data.error || 'Registration failed. Please try again.');
+        }
         setToken(data.token);
         localStorage.setItem('jwt', data.token);
         setUser(data.user);

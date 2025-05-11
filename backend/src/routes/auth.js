@@ -9,16 +9,28 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 // Register
 router.post('/register', async (req, res) => {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    console.log('[REGISTER] Incoming request:', { email });
+    if (!email || !password) {
+        console.warn('[REGISTER] Missing email or password');
+        return res.status(400).json({ error: 'Email and password required' });
+    }
     try {
         const existing = await userModel.findUserByEmail(email);
-        if (existing) return res.status(409).json({ error: 'User already exists' });
+        if (existing) {
+            console.warn(`[REGISTER] User already exists: ${email}`);
+            return res.status(409).json({ error: 'User already exists' });
+        }
         const hash = await bcrypt.hash(password, 10);
+        console.log('[REGISTER] Password hashed');
         const user = await userModel.createUser(email, null, hash);
+        console.log('[REGISTER] User created:', user);
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
         res.json({ token, user: { id: user.id, email: user.email, is_premium: user.is_premium } });
     } catch (err) {
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('[REGISTER] Error:', err);
+        // In dev, return error message for debugging
+        const isDev = process.env.NODE_ENV !== 'production';
+        res.status(500).json({ error: isDev ? (err.message || 'Internal server error') : 'Internal server error' });
     }
 });
 
