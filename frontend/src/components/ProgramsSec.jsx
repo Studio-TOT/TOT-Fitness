@@ -46,14 +46,9 @@ function ProgramsSec() {
             <img src={bw1} alt="bw1" width="225" height="225" />
           </Link>
         </div>
-        <div className="cardbp1 relative">
-          <Link className="linkcard" to={isPremium() ? "/programs/bootypump" : "/subscription"}>
+        <div className="cardbp1">
+          <Link className="linkcard" to="/programs/bootypump">
             <img src={bp1} alt="bp1" width="225" height="225" />
-            {!isPremium() && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center text-white text-lg font-bold rounded">
-                Premium
-              </div>
-            )}
           </Link>
         </div>
         <div className="cardfb1">
@@ -62,14 +57,9 @@ function ProgramsSec() {
             <img src={fb1} alt="fb1" width="225" height="225" />
           </Link>
         </div>
-        <div className="cardmb1 relative">
-          <Link className="linkcard" to={isPremium() ? "/programs/musclebuilding" : "/subscription"}>
+        <div className="cardmb1">
+          <Link className="linkcard" to="/programs/musclebuilding">
             <img src={mb1} alt="mb1" width="225" height="225" />
-            {!isPremium() && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center text-white text-lg font-bold rounded">
-                Premium
-              </div>
-            )}
           </Link>
         </div>
         <div className="cardct1 relative">
