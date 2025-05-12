@@ -27,7 +27,24 @@ function DesktopNavbar({ navItems, navBackground, user, logout, setAuthOpen, ico
                 {navItems.map(item => (
                     <li key={item.label}>
                         {item.type === 'link' ? (
-                            <Link to={item.href}>{item.label}</Link>
+                            <Link to={item.href} className="relative flex items-center group">
+                                {item.label}
+                                {item.isPremium && (
+                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                                        PRO
+                                    </span>
+                                )}
+                                {item.isPremium && (
+                                    <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-1 hidden group-hover:block">
+                                        <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                            Premium feature
+                                            <svg className="absolute text-gray-900 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255">
+                                                <polygon className="fill-current" points="0,0 127.5,127.5 255,0" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                )}
+                            </Link>
                         ) : (
                             <a href={item.href} onClick={e => handleScroll(e, item.scrollId)}>{item.label}</a>
                         )}

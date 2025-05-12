@@ -23,6 +23,7 @@ import {
   generateFullBodyProgram,
   generateBodyweightProgram,
 } from "../utils/programGenerator";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
   const { exercises, isLoading, error, fetchExercises } = useExercises();
@@ -37,6 +38,8 @@ export default function Dashboard() {
   const [openPopUp, setOpenPopUp] = useState(false);
   const [imgSelect, setImgSelect] = useState(1);
   const nav = useNavigate();
+  const [activeTab, setActiveTab] = useState("profile");
+  const { user, logout, isPremium } = useAuth();
 
   useEffect(() => {
     // Only fetch exercises if we don't have them yet
@@ -86,6 +89,11 @@ export default function Dashboard() {
 
   const dayArr = Array.from({ length: 3 }, (v, k) => k + 1);
   const weekArr = Array.from({ length: 12 }, (v, k) => k + 1);
+
+  const handleLogout = () => {
+    logout();
+    nav("/");
+  };
 
   if (isLoading) {
     return <div className="loading">Loading dashboard...</div>;
@@ -190,76 +198,214 @@ export default function Dashboard() {
   });
 
   return (
-    <>
-      <div className="dashboard-container">
-        <div className="arrow-title">
-          <Link to="/" onClick={handleNav}>
-            <img className="backarrow" src={backarrow} alt="backarrow" />
-          </Link>
-          <h2>Dashboard</h2>
-        </div>
-        <p id="dash-title">My programs</p>
-        <div id="swiper-dash">
-          <Swiper
-            spaceBetween={30}
-            pagination
-            modules={[Pagination]}
-            onSlideChange={(swiper) =>
-              setTimeout(() => {
-                setActiveIndex(swiper.activeIndex);
-              }, "100")
-            }
-            className="mySwiper"
-          >
-            <SwiperSlide>
-              <img className="imgprog" src={mb1} alt="musclebuilding" />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img className="imgprog" src={bw1} alt="bodyweight" />
-            </SwiperSlide>
-          </Swiper>
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <h1 className="text-3xl font-bold mb-8 text-center">Dashboard</h1>
 
-        <div className="gallery-dash">
-          <img
-            src={mb1}
-            alt=""
-            className={imgSelect === 1 ? "imgprog selected" : "imgprog"}
-            onClick={() => {
-              setImgSelect(1);
-              setTimeout(() => {
-                setActiveIndex(0);
-              }, "100");
-            }}
-          />
-          <img
-            src={bw1}
-            alt=""
-            className={imgSelect === 2 ? "imgprog selected" : "imgprog"}
-            onClick={() => {
-              setImgSelect(2);
-              setTimeout(() => {
-                setActiveIndex(1);
-              }, "100");
-            }}
-          />
-          <div className="emptyprog" />
-          <div className="emptyprog" />
-        </div>
-        <div className="dashboard1">
-          {activeIndex === 0 && progMuscleBuilding}
-        </div>
-        <div className="dashboard2">{activeIndex !== 0 && progBodyweight}</div>
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 mb-8">
+        <button
+          className={`py-3 px-6 font-medium text-lg ${activeTab === "profile"
+              ? "border-b-2 border-indigo-600 text-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+            }`}
+          onClick={() => setActiveTab("profile")}
+        >
+          Profile
+        </button>
+        <button
+          className={`py-3 px-6 font-medium text-lg ${activeTab === "subscription"
+              ? "border-b-2 border-indigo-600 text-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+            }`}
+          onClick={() => setActiveTab("subscription")}
+        >
+          Subscription
+        </button>
+        <button
+          className={`py-3 px-6 font-medium text-lg ${activeTab === "saved"
+              ? "border-b-2 border-indigo-600 text-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+            }`}
+          onClick={() => setActiveTab("saved")}
+        >
+          Saved Workouts
+        </button>
       </div>
-      <div className={openPopUp ? "popup-week alert" : "popup-week"}>
-        <p>
-          {weekLeft > 0
-            ? `Keep going ! ${weekLeft} ${
-                weekLeft === 1 ? "week" : "weeks"
-              } to go !`
-            : `Congratulations ! You did it !`}
-        </p>
-      </div>
-    </>
+
+      {/* Profile Tab */}
+      {activeTab === "profile" && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Your Profile</h2>
+          <div className="mb-6">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center">
+                <span className="text-3xl font-bold text-indigo-600">
+                  {user?.email.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <div className="px-4 py-2 bg-gray-100 rounded-md">{user?.email}</div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Account Type
+                </label>
+                <div className="px-4 py-2 bg-gray-100 rounded-md flex items-center">
+                  {isPremium() ? (
+                    <>
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium mr-2">
+                        Premium
+                      </span>
+                      <span>You have access to all content</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm font-medium mr-2">
+                        Standard
+                      </span>
+                      <span>
+                        <a href="/subscription" className="text-indigo-600 hover:text-indigo-500 hover:underline">
+                          Upgrade to Premium
+                        </a> for full access
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-200">
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Subscription Tab */}
+      {activeTab === "subscription" && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Your Subscription</h2>
+
+          {isPremium() ? (
+            <div className="mb-6">
+              <div className="p-4 mb-6 bg-green-50 border border-green-200 rounded-md">
+                <h3 className="text-lg font-medium text-green-800 mb-2">Active Subscription</h3>
+                <p className="text-green-700">
+                  You have an active premium subscription with access to all content and features.
+                </p>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-md p-4">
+                <h4 className="font-medium mb-2">Premium Benefits</h4>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Access to all workout programs
+                  </li>
+                  <li className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Nutrition meal plans and recipes
+                  </li>
+                  <li className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Save and customize workouts
+                  </li>
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-6">
+              <div className="p-4 mb-6 bg-yellow-50 border border-yellow-200 rounded-md">
+                <h3 className="text-lg font-medium text-yellow-800 mb-2">No Active Subscription</h3>
+                <p className="text-yellow-700">
+                  You're currently on the free plan with limited access to content.
+                </p>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-md p-4 mb-6">
+                <h4 className="font-medium mb-2">Premium Benefits</h4>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Access to all workout programs
+                  </li>
+                  <li className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Nutrition meal plans and recipes
+                  </li>
+                  <li className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Save and customize workouts
+                  </li>
+                </ul>
+              </div>
+
+              <a
+                href="/subscription"
+                className="block w-full py-3 px-4 bg-indigo-600 text-white font-medium text-center rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Upgrade to Premium
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Saved Workouts Tab */}
+      {activeTab === "saved" && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Saved Workouts</h2>
+
+          {!isPremium() ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+              <h3 className="text-lg font-medium text-yellow-800 mb-2">Premium Feature</h3>
+              <p className="text-yellow-700 mb-4">
+                Saving workouts is a premium feature. Upgrade to access this functionality.
+              </p>
+              <a
+                href="/subscription"
+                className="inline-block py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Upgrade to Premium
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-gray-600">You haven't saved any workouts yet.</p>
+              <a
+                href="/programs/all"
+                className="inline-block py-2 px-4 border border-indigo-600 text-indigo-600 font-medium rounded-md hover:bg-indigo-50 transition-colors"
+              >
+                Browse Programs
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

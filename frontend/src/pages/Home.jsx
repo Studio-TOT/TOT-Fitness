@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { useAuth } from "../context/AuthContext";
 import Loader from "../components/Loader";
 import ProgramsSec from "../components/ProgramsSec";
 import MannequinWrapper from "../components/MannequinWrapper";
@@ -9,6 +10,7 @@ import NutritionSlide from "../components/NutritionSlide";
 
 function Home({ data }) {
   const [isLoading, setIsLoading] = useState(true);
+  const { isPremium } = useAuth();
 
   useEffect(() => {
     setIsLoading(true);
@@ -23,7 +25,7 @@ function Home({ data }) {
       <ProgramsSec />
       <MannequinWrapper />
       <NutritionSlide data={data} />
-      <Newsletter />
+      <Newsletter isPremium={isPremium ? isPremium() : false} />
     </div>
   );
 }

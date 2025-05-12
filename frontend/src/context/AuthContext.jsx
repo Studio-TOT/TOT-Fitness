@@ -71,6 +71,30 @@ export function AuthProvider({ children }) {
         return data.user;
     };
 
+    const socialLogin = async (provider, accessToken) => {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/${provider.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: accessToken }),
+        });
+
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            data = {};
+        }
+
+        if (!res.ok) {
+            throw new Error(data.error || `${provider} login failed. Please try again.`);
+        }
+
+        setToken(data.token);
+        localStorage.setItem('jwt', data.token);
+        setUser(data.user);
+        return data.user;
+    };
+
     const logout = () => {
         setToken(null);
         setUser(null);
@@ -80,7 +104,16 @@ export function AuthProvider({ children }) {
     const isPremium = () => user?.is_premium;
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout, isPremium }}>
+        <AuthContext.Provider value={{
+            user,
+            token,
+            loading,
+            login,
+            register,
+            socialLogin,
+            logout,
+            isPremium
+        }}>
             {children}
         </AuthContext.Provider>
     );

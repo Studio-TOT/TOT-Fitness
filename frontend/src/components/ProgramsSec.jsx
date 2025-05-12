@@ -1,5 +1,5 @@
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "swiper/swiper-bundle.min.css";
 import "swiper/swiper.min.css";
 import { Pagination } from "swiper";
@@ -13,7 +13,20 @@ import sm1lock from "../assets/sm1lock.png";
 import { useAuth } from '../context/AuthContext';
 
 function ProgramsSec() {
-  const { isPremium } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Function to handle subscription clicks
+  const handleSubscriptionClick = (e) => {
+    e.preventDefault();
+    // If user not logged in, redirect to login with subscription as redirect target
+    if (!user) {
+      navigate('/login', { state: { from: '/subscription' } });
+    } else {
+      navigate('/subscription');
+    }
+  };
+
   return (
     <div className="m-2.5 p-4 md:m-10 md:flex md:flex-row md:flex-wrap md:justify-between" id="prog">
       <div className="programtext">
@@ -31,7 +44,8 @@ function ProgramsSec() {
             you the best !{" "}
             <Link
               className="linkcard"
-              to="/subscription"
+              onClick={handleSubscriptionClick}
+              to={user ? "/subscription" : "#"}
               id="suscriptionprogsec2"
             >
               <Start content="Click Here" />
@@ -63,12 +77,20 @@ function ProgramsSec() {
           </Link>
         </div>
         <div className="cardct1 relative">
-          <Link className="linkcard" to="/subscription">
+          <Link
+            className="linkcard"
+            onClick={handleSubscriptionClick}
+            to={user ? "/subscription" : "#"}
+          >
             <img src={ct1lock} alt="ct1lock" width="225" height="225" />
           </Link>
         </div>
         <div className="cardsm1 relative">
-          <Link className="linkcard" to="/subscription">
+          <Link
+            className="linkcard"
+            onClick={handleSubscriptionClick}
+            to={user ? "/subscription" : "#"}
+          >
             <img src={sm1lock} alt="sm1lock" width="225" height="225" />
           </Link>
         </div>
@@ -93,18 +115,31 @@ function ProgramsSec() {
           <Link className="linkcard" to="/programs/bodyweight" />
         </SwiperSlide>{" "}
         <SwiperSlide className="Card5">
-          <Link className="linkcard" to="/subscription" />
+          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? "/subscription" : "#"} />
         </SwiperSlide>
         <SwiperSlide className="Card6">
-          <Link className="linkcard" to="/subscription" />
+          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? "/subscription" : "#"} />
         </SwiperSlide>
       </Swiper>
+      {/* {!user && (
+        <div className="w-full mt-8 mb-6 p-6 bg-gray-100 rounded-lg text-center">
+          <p className="mb-6 text-lg text-gray-700 font-medium">You need to sign in to access premium content</p>
+          <div className="flex flex-col md:flex-row justify-center md:space-x-6 space-y-4 md:space-y-0">
+            <Link to="/login" className="bg-indigo-600 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-indigo-700 transition-colors">
+              Sign In
+            </Link>
+            <Link to="/signup" className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-green-700 transition-colors">
+              Create Account
+            </Link>
+          </div>
+        </div>
+      )} */}
       <div className="Description" id="descriptiondesk">
         Want to get full access to our programs ? {"\n"} {"\n"} Click below to
         get a look at our subscription page and chose the plan that fits you the
         best !{" "}
       </div>
-      <Link className="linkcard" to="/subscription" id="suscriptionprogsec">
+      <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? "/subscription" : "#"} id="suscriptionprogsec">
         <Start content="Click Here" />
       </Link>
     </div>

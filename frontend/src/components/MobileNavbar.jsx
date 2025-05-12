@@ -6,6 +6,7 @@ import dash from '../assets/dashboard.png';
 import prog from '../assets/ecrire.png';
 import exo from '../assets/haltere.png';
 import nut from '../assets/plaque.png';
+import { FiUser } from 'react-icons/fi';
 
 const iconMap = {
     Dashboard: dash,
@@ -29,24 +30,57 @@ function MobileNavbar({ navItems, user, logout, setAuthOpen, iconColor }) {
             }
         }, 100);
     };
+
+    // Mobile toolbar items
+    const toolbarItems = [...navItems];
+
+    // If user is logged in, add a Dashboard/Profile link
+    if (user) {
+        const dashboardItem = {
+            label: 'Profile',
+            type: 'link',
+            href: '/dashboard',
+        };
+
+        // Insert Dashboard before the last item (which is typically the auth button)
+        toolbarItems.splice(toolbarItems.length, 0, dashboardItem);
+    }
+
     return (
         <nav className="navbar-mobile">
             <ul className="flex justify-evenly items-center">
-                {navItems.map(item => (
+                {toolbarItems.map(item => (
                     <li key={item.label} className="flex flex-col items-center">
                         {item.type === 'link' ? (
-                            <Link to={item.href}>
-                                {iconMap[item.label] && <img src={iconMap[item.label]} alt="" width="30px" className="nav-icon" />} {item.label}
+                            <Link to={item.href} className="flex flex-col items-center text-xs">
+                                <div className="relative">
+                                    {item.label === 'Profile' ?
+                                        <div className="w-7 h-7 mb-1 flex items-center justify-center bg-indigo-100 rounded-full">
+                                            <FiUser className="text-indigo-600" />
+                                        </div> :
+                                        iconMap[item.label] && <img src={iconMap[item.label]} alt="" width="30px" className="nav-icon mb-1" />
+                                    }
+                                    {item.isPremium && (
+                                        <span className="absolute -top-1 -right-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
+                                            PRO
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center">
+                                    <span>{item.label}</span>
+                                </div>
                             </Link>
                         ) : (
-                            <a href={item.href} onClick={e => handleScroll(e, item.scrollId)}>
-                                {iconMap[item.label] && <img src={iconMap[item.label]} alt="" width="30px" />} {item.label}
+                            <a href={item.href} onClick={e => handleScroll(e, item.scrollId)} className="flex flex-col items-center text-xs">
+                                {iconMap[item.label] && <img src={iconMap[item.label]} alt="" width="30px" className="mb-1" />}
+                                <span>{item.label}</span>
                             </a>
                         )}
                     </li>
                 ))}
                 <li className="flex flex-col items-center">
                     <NavAuthButton user={user} logout={logout} setAuthOpen={setAuthOpen} iconColor="text-black" />
+                    <span className="text-xs mt-1">{user ? 'Account' : 'Sign In'}</span>
                 </li>
             </ul>
         </nav>

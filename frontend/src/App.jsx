@@ -12,6 +12,11 @@ import Programs from "./pages/Programs";
 import Subscription from "./pages/Subscription";
 import Dashboard from "./pages/Dashboard";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PremiumRoute from "./components/PremiumRoute";
+import NutritionPreview from "./components/NutritionPreview";
 import nutrition from "./data";
 import { ExerciseProvider } from "./context/ExerciseContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -21,7 +26,9 @@ function Layout({ children, isTransparentNav }) {
   return (
     <>
       {isTransparentNav ? <Navbar isTransparent /> : <Navbar />}
-      {children}
+      <main className="min-h-screen">
+        {children}
+      </main>
       <Footer />
     </>
   );
@@ -37,6 +44,7 @@ function App() {
     <AuthProvider>
       <ExerciseProvider>
         <Routes>
+          {/* Public Routes */}
           <Route
             path="/"
             element={
@@ -46,10 +54,30 @@ function App() {
             }
           />
           <Route
+            path="/login"
+            element={
+              <Layout>
+                <Login />
+              </Layout>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <Layout>
+                <Signup />
+              </Layout>
+            }
+          />
+
+          {/* Nutrition Pages - Premium Content */}
+          <Route
             path="/Nutritionpage"
             element={
               <Layout>
-                <NutritionPage data={nutrition} />
+                <PremiumRoute preview={<NutritionPreview />}>
+                  <NutritionPage data={nutrition} />
+                </PremiumRoute>
               </Layout>
             }
           />
@@ -57,10 +85,13 @@ function App() {
             path="/Nutritionpage/:idMeal"
             element={
               <Layout>
-                <HubertEats data={nutrition} />
+                <PremiumRoute preview={<NutritionPreview />}>
+                  <HubertEats data={nutrition} />
+                </PremiumRoute>
               </Layout>
             }
           />
+
           <Route
             path="/:exercise"
             element={
@@ -69,22 +100,8 @@ function App() {
               </Layout>
             }
           />
-          <Route
-            path="/subscription"
-            element={
-              <Layout>
-                <Subscription />
-              </Layout>
-            }
-          />
-          <Route
-            path="/subscription/success"
-            element={
-              <Layout>
-                <SubscriptionSuccess />
-              </Layout>
-            }
-          />
+
+          {/* Program routes are accessible to everyone but have premium content restrictions applied inside */}
           <Route
             path="/programs/:programType"
             element={
@@ -93,11 +110,37 @@ function App() {
               </Layout>
             }
           />
+
+          {/* Protected Routes - Authentication Required */}
           <Route
             path="/dashboard"
             element={
               <Layout>
-                <Dashboard />
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+
+          {/* Protected Routes - Authentication Required */}
+          <Route
+            path="/subscription"
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <Subscription />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/subscription/success"
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <SubscriptionSuccess />
+                </ProtectedRoute>
               </Layout>
             }
           />

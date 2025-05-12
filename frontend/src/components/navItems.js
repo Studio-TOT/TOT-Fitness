@@ -1,11 +1,5 @@
 const navItems = [
     {
-        label: 'Dashboard',
-        href: '/dashboard',
-        icon: null,
-        type: 'link',
-    },
-    {
         label: 'Programs',
         href: '/',
         icon: null,
@@ -24,6 +18,7 @@ const navItems = [
         href: '/Nutritionpage',
         icon: null,
         type: 'link',
+        isPremium: true,
     },
 ];
 

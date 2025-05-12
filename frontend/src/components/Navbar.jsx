@@ -9,30 +9,26 @@ import MobileNavbar from './MobileNavbar';
 function Navbar({ isTransparent = false }) {
   const { user, logout } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
-  const [navBackground, setNavBackground] = useState("navbar-desktop-scrolled");
+  const [navBackground, setNavBackground] = useState(
+    isTransparent ? "navbar-desktop" : "navbar-desktop navbar-desktop-scrolled"
+  );
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY || 0;
-      if (window.location.pathname === "/" && currentScrollY < 100) {
+      if (isTransparent && currentScrollY < 100) {
         setNavBackground("navbar-desktop");
       } else {
         setNavBackground("navbar-desktop navbar-desktop-scrolled");
       }
     };
+
     window.addEventListener("scroll", handleScroll);
-    handleScroll();
+    handleScroll(); // Call once to set initial state
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
-
-  useEffect(() => {
-    if (isTransparent) {
-      setNavBackground("navbar-desktop");
-      return;
-    }
-    setNavBackground("navbar-desktop navbar-desktop-scrolled");
   }, [isTransparent]);
 
   // Determine icon color based on navbar background
