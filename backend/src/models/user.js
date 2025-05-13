@@ -19,7 +19,11 @@ const createUser = async (email, stripeCustomerId, passwordHash = null) => {
 };
 
 const setPremiumStatus = async (userId, isPremium) => {
-    await pool.query('UPDATE users SET is_premium = $1 WHERE id = $2', [isPremium, userId]);
+    const { rows } = await pool.query(
+        'UPDATE users SET is_premium = $1 WHERE id = $2 RETURNING *',
+        [isPremium, userId]
+    );
+    return rows[0];
 };
 
 module.exports = {

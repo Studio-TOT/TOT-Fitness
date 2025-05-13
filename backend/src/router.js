@@ -1,15 +1,20 @@
-const express = require("express");
-
+const express = require('express');
 const router = express.Router();
 
-const itemControllers = require("./controllers/itemControllers");
+// Import all route modules
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+const subscriptionRoutes = require('./routes/subscription');
+const exerciseRoutes = require('./routes/exercise');
+const programRoutes = require('./routes/program');
+const nutritionRoutes = require('./routes/nutrition');
 
-router.get("/items", itemControllers.browse);
-router.get("/items/:id", itemControllers.read);
-router.put("/items/:id", itemControllers.edit);
-router.post("/items", itemControllers.add);
-router.delete("/items/:id", itemControllers.destroy);
-
-// Route pour le fichier data.json
+// Mount routes with their respective prefixes
+router.use('/auth', authRoutes);
+router.use('/user', userRoutes);
+router.use('/subscription', subscriptionRoutes);
+router.use('/exercise', exerciseRoutes);
+router.use('/program', programRoutes);
+router.use('/nutrition', nutritionRoutes);
 
 module.exports = router;

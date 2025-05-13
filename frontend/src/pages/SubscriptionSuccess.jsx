@@ -1,20 +1,93 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import backarrow from "../assets/back-arrow.svg";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Newsletter from "../components/Newsletter";
+import { useAuth } from "../context/AuthContext";
 
 function SubscriptionSuccess() {
     const nav = useNavigate();
     const [searchParams] = useSearchParams();
     const sessionId = searchParams.get("session_id");
+    const [verificationStatus, setVerificationStatus] = useState('verifying');
+    const { refreshUser } = useAuth();
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
+    useEffect(() => {
+        const verifySession = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/verify-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ sessionId }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to verify session');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    setVerificationStatus('success');
+                    // Refresh user data to update premium status
+                    await refreshUser();
+                } else {
+                    setVerificationStatus('error');
+                }
+            } catch (error) {
+                console.error('Error verifying session:', error);
+                setVerificationStatus('error');
+            }
+        };
+
+        if (sessionId) {
+            verifySession();
+        }
+    }, [sessionId, refreshUser]);
+
     const handleNav = () => {
         nav(-1);
     };
+
+    if (verificationStatus === 'verifying') {
+        return (
+            <div className="subscription-cards">
+                <div>
+                    <div className="arrow-title">
+                        <Link to="/" onClick={handleNav}>
+                            <img className="backarrow" src={backarrow} alt="backarrow" />
+                        </Link>{" "}
+                        <h2>Verifying Subscription</h2>
+                    </div>
+                    <p>Please wait while we verify your subscription...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (verificationStatus === 'error') {
+        return (
+            <div className="subscription-cards">
+                <div>
+                    <div className="arrow-title">
+                        <Link to="/" onClick={handleNav}>
+                            <img className="backarrow" src={backarrow} alt="backarrow" />
+                        </Link>{" "}
+                        <h2>Verification Error</h2>
+                    </div>
+                    <p>There was an error verifying your subscription. Please contact support.</p>
+                    <Link to="/dashboard">
+                        <button className="black-button" style={{ marginTop: 24 }}>Go to Dashboard</button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>

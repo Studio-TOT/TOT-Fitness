@@ -12,7 +12,7 @@ const pool = require('./src/db');
 const exercisesRouter = require('./src/routes/exercises');
 const { createCheckoutSession, handleWebhook } = require('./src/stripe');
 const userRouter = require('./src/routes/user');
-const authRouter = require('./src/routes/auth');
+const authRouter = require('./src/routes/auth').router;
 
 const app = express();
 const port = process.env.PORT || 3000;

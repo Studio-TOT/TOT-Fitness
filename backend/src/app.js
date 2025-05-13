@@ -6,20 +6,24 @@ const path = require("node:path");
 // create express app
 
 const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
 
 const app = express();
 
 // use some application-level middlewares
 
-app.use(express.json());
-
-const cors = require("cors");
-
+app.use(helmet());
 app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
 
 const router = require("./router");
+const subscriptionRouter = require("./routes/subscription");
 
-app.use(router);
+app.use("/api", router);
+app.use("/subscription", subscriptionRouter);
 
 // serve the `backend/public` folder for public resources
 
@@ -47,6 +51,12 @@ if (fs.existsSync(reactIndexFile)) {
     res.sendFile(reactIndexFile);
   });
 }
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something broke!' });
+});
 
 // ready to export
 
