@@ -2,29 +2,42 @@ import PropTypes from "prop-types";
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import Start from "./Start";
+import { useAuth } from '../context/AuthContext';
 
 function SubscriptionCard({ rythm, price, save, priceId }) {
   const [loading, setLoading] = useState(false);
+  const { token } = useAuth();
 
   const handleSubscribe = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/create-checkout-session`, {
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      // Store token in localStorage before redirecting
+      localStorage.setItem('jwt', token);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           priceId,
-          userId: 'user_id', // Replace with actual user ID from your auth system
         }),
       });
 
-      const { sessionId } = await response.json();
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
 
       // Redirect to Stripe Checkout
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-      await stripe.redirectToCheckout({ sessionId });
+      window.location.href = url;
     } catch (error) {
       console.error('Error:', error);
       // Handle error (show error message to user)

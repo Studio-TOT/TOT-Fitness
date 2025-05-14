@@ -9,7 +9,7 @@ function SubscriptionSuccess() {
     const [searchParams] = useSearchParams();
     const sessionId = searchParams.get("session_id");
     const [verificationStatus, setVerificationStatus] = useState('verifying');
-    const { refreshUser } = useAuth();
+    const { token, refreshUser } = useAuth();
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -18,37 +18,53 @@ function SubscriptionSuccess() {
     useEffect(() => {
         const verifySession = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/verify-session`, {
+                if (!token) {
+                    console.error('[SUBSCRIPTION_SUCCESS] No authentication token found');
+                    setVerificationStatus('error');
+                    return;
+                }
+
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/verify-session`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
-                    credentials: 'include',
                     body: JSON.stringify({ sessionId }),
                 });
 
                 if (!response.ok) {
+                    console.error('[SUBSCRIPTION_SUCCESS] Verification failed:', response.status);
                     throw new Error('Failed to verify session');
                 }
 
                 const data = await response.json();
+
                 if (data.success) {
                     setVerificationStatus('success');
                     // Refresh user data to update premium status
                     await refreshUser();
+                    // Redirect to dashboard after a short delay
+                    setTimeout(() => {
+                        nav('/dashboard');
+                    }, 2000);
                 } else {
+                    console.error('[SUBSCRIPTION_SUCCESS] Verification unsuccessful:', data);
                     setVerificationStatus('error');
                 }
             } catch (error) {
-                console.error('Error verifying session:', error);
+                console.error('[SUBSCRIPTION_SUCCESS] Error verifying session:', error);
                 setVerificationStatus('error');
             }
         };
 
         if (sessionId) {
             verifySession();
+        } else {
+            console.error('[SUBSCRIPTION_SUCCESS] No session ID found in URL');
+            setVerificationStatus('error');
         }
-    }, [sessionId, refreshUser]);
+    }, [sessionId, token, refreshUser, nav]);
 
     const handleNav = () => {
         nav(-1);
@@ -82,7 +98,7 @@ function SubscriptionSuccess() {
                     </div>
                     <p>There was an error verifying your subscription. Please contact support.</p>
                     <Link to="/dashboard">
-                        <button className="black-button" style={{ marginTop: 24 }}>Go to Dashboard</button>
+                        <button className="black-button">Go to Dashboard</button>
                     </Link>
                 </div>
             </div>
@@ -109,9 +125,9 @@ function SubscriptionSuccess() {
                     <p className="subscription-save" style={{ fontSize: 12, color: '#888' }}>
                         (Session ID: {sessionId})
                     </p>
-                    <Link to="/dashboard">
-                        <button className="black-button" style={{ marginTop: 24 }}>Go to Dashboard</button>
-                    </Link>
+                    <p className="subscription-save" style={{ color: '#666', marginTop: 16 }}>
+                        Redirecting to dashboard...
+                    </p>
                 </div>
             </div>
 

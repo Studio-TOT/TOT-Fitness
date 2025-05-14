@@ -8,11 +8,13 @@ if (!process.env.NODE_ENV) {
 
 const express = require('express');
 const cors = require('cors');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const pool = require('./src/db');
 const exercisesRouter = require('./src/routes/exercises');
 const { createCheckoutSession, handleWebhook } = require('./src/stripe');
 const userRouter = require('./src/routes/user');
 const authRouter = require('./src/routes/auth').router;
+const subscriptionRouter = require('./src/routes/subscription');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -41,34 +43,7 @@ app.use(cors(corsOptions));
 // Handle preflight requests
 app.options('*', cors(corsOptions));
 
-app.use(express.json());
-
-// Add database pool to request object
-app.use((req, res, next) => {
-  req.db = pool;
-  next();
-});
-
-// Exercise routes
-app.use('/api/exercises', exercisesRouter);
-
-// User routes
-app.use('/api/user', userRouter);
-
-// Auth routes
-app.use('/api/auth', authRouter);
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    environment: process.env.NODE_ENV,
-    database: process.env.NODE_ENV === 'production' ? 'production' : 'local',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Stripe webhook endpoint
+// Stripe webhook endpoint - must be before express.json()
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
@@ -90,6 +65,36 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     console.error('Error handling webhook:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+app.use(express.json());
+
+// Add database pool to request object
+app.use((req, res, next) => {
+  req.db = pool;
+  next();
+});
+
+// Exercise routes
+app.use('/api/exercises', exercisesRouter);
+
+// User routes
+app.use('/api/user', userRouter);
+
+// Auth routes
+app.use('/api/auth', authRouter);
+
+// Subscription routes
+app.use('/api/subscription', subscriptionRouter);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    environment: process.env.NODE_ENV,
+    database: process.env.NODE_ENV === 'production' ? 'production' : 'local',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Create checkout session

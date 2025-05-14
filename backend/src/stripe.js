@@ -72,27 +72,43 @@ const handleWebhook = async (event) => {
             case 'checkout.session.completed': {
                 const session = event.data.object;
                 const customerId = session.customer;
-                const email = session.customer_details?.email;
+                const userId = session.client_reference_id;
                 const subscriptionId = session.subscription;
-                // Find or create user
-                let user = await userModel.findUserByStripeCustomerId(customerId);
-                if (!user && email) {
-                    user = await userModel.findUserByEmail(email);
-                    if (!user) {
-                        user = await userModel.createUser(email, customerId);
-                    }
+
+                // Find user by ID
+                const user = await userModel.findUserById(userId);
+                if (!user) {
+                    console.error('[WEBHOOK] User not found', { userId });
+                    throw new Error('User not found');
                 }
-                if (user) {
-                    await userModel.setPremiumStatus(user.id, true);
-                    // Get subscription details from Stripe
-                    const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
-                    await subscriptionModel.createSubscription(
-                        user.id,
-                        subscriptionId,
-                        stripeSub.status,
-                        new Date(stripeSub.current_period_end * 1000)
-                    );
-                }
+
+                // Update user's Stripe customer ID first
+                await userModel.updateStripeCustomerId(user.id, customerId);
+
+                // Then update premium status
+                await userModel.setPremiumStatus(user.id, true);
+
+                // Get subscription details from Stripe
+                const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
+
+                // For testing, set period end to 30 days from now
+                const currentPeriodEnd = new Date();
+                currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 30);
+
+                await subscriptionModel.createSubscription(
+                    user.id,
+                    subscriptionId,
+                    stripeSub.status,
+                    currentPeriodEnd
+                );
+
+                // Verify the update
+                const updatedUser = await userModel.findUserById(userId);
+                console.log('[WEBHOOK] User updated successfully', {
+                    userId: updatedUser.id,
+                    isPremium: updatedUser.is_premium,
+                    stripeCustomerId: updatedUser.stripe_customer_id
+                });
                 break;
             }
             case 'customer.subscription.deleted': {
@@ -101,21 +117,25 @@ const handleWebhook = async (event) => {
                 // Find subscription in DB
                 const sub = await subscriptionModel.findByStripeSubscriptionId(stripeSubscriptionId);
                 if (sub) {
+                    // For testing, set period end to now
+                    const currentPeriodEnd = new Date();
+
                     await subscriptionModel.updateSubscription(
                         stripeSubscriptionId,
                         subscription.status,
-                        new Date(subscription.current_period_end * 1000)
+                        currentPeriodEnd
                     );
+
                     // Set user as not premium
                     await userModel.setPremiumStatus(sub.user_id, false);
                 }
                 break;
             }
             default:
-                console.log(`Unhandled event type ${event.type}`);
+                console.log(`[WEBHOOK] Unhandled event type ${event.type}`);
         }
     } catch (error) {
-        console.error('Error handling webhook:', error);
+        console.error('[WEBHOOK] Error handling webhook:', error);
         throw error;
     }
 };
