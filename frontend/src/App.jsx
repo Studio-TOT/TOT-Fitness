@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import NutritionPage from "./pages/NutritionPage";
 import HubertEats from "./pages/HubertEats";
 import Programs from "./pages/Programs";
+import ProgramDetails from "./pages/ProgramDetails";
 import Subscription from "./pages/Subscription";
 import Dashboard from "./pages/Dashboard";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
@@ -103,10 +104,22 @@ function App() {
 
           {/* Program routes are accessible to everyone but have premium content restrictions applied inside */}
           <Route
-            path="/programs/:programType"
+            path="/programs"
             element={
               <Layout>
-                <Programs />
+                <ProtectedRoute>
+                  <Programs />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/programs/:programId"
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <ProgramDetails />
+                </ProtectedRoute>
               </Layout>
             }
           />

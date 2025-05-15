@@ -13,7 +13,7 @@ import sm1lock from "../assets/sm1lock.png";
 import { useAuth } from '../context/AuthContext';
 
 function ProgramsSec() {
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const navigate = useNavigate();
 
   // Function to handle subscription clicks
@@ -22,7 +22,11 @@ function ProgramsSec() {
     // If user not logged in, redirect to login with subscription as redirect target
     if (!user) {
       navigate('/login', { state: { from: '/subscription' } });
+    } else if (isPremium()) {
+      // If user is already premium, redirect to dashboard
+      navigate('/dashboard');
     } else {
+      // If user is logged in but not premium, redirect to subscription page
       navigate('/subscription');
     }
   };
@@ -45,7 +49,7 @@ function ProgramsSec() {
             <Link
               className="linkcard"
               onClick={handleSubscriptionClick}
-              to={user ? "/subscription" : "#"}
+              to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"}
               id="suscriptionprogsec2"
             >
               <Start content="Click Here" />
@@ -80,7 +84,7 @@ function ProgramsSec() {
           <Link
             className="linkcard"
             onClick={handleSubscriptionClick}
-            to={user ? "/subscription" : "#"}
+            to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"}
           >
             <img src={ct1lock} alt="ct1lock" width="225" height="225" />
           </Link>
@@ -89,7 +93,7 @@ function ProgramsSec() {
           <Link
             className="linkcard"
             onClick={handleSubscriptionClick}
-            to={user ? "/subscription" : "#"}
+            to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"}
           >
             <img src={sm1lock} alt="sm1lock" width="225" height="225" />
           </Link>
@@ -115,10 +119,10 @@ function ProgramsSec() {
           <Link className="linkcard" to="/programs/bodyweight" />
         </SwiperSlide>{" "}
         <SwiperSlide className="Card5">
-          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? "/subscription" : "#"} />
+          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"} />
         </SwiperSlide>
         <SwiperSlide className="Card6">
-          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? "/subscription" : "#"} />
+          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"} />
         </SwiperSlide>
       </Swiper>
       {/* {!user && (
@@ -139,7 +143,7 @@ function ProgramsSec() {
         get a look at our subscription page and chose the plan that fits you the
         best !{" "}
       </div>
-      <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? "/subscription" : "#"} id="suscriptionprogsec">
+      <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"} id="suscriptionprogsec">
         <Start content="Click Here" />
       </Link>
     </div>
