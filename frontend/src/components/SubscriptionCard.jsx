@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 function SubscriptionCard({ rythm, price, save, priceId }) {
   const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const handleSubscribe = async () => {
     try {
@@ -27,6 +27,8 @@ function SubscriptionCard({ rythm, price, save, priceId }) {
         },
         body: JSON.stringify({
           priceId,
+          successUrl: `${window.location.origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/subscription`
         }),
       });
 

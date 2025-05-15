@@ -12,33 +12,67 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     const refreshUser = async () => {
-        if (!token) return;
+        const storedToken = localStorage.getItem('jwt');
+        if (!storedToken) {
+            setUser(null);
+            setToken(null);
+            return;
+        }
+
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: { Authorization: `Bearer ${storedToken}` },
             });
             if (response.ok) {
                 const data = await response.json();
                 setUser(data);
+                setToken(storedToken);
+            } else {
+                // If the token is invalid, clear everything
+                setUser(null);
+                setToken(null);
+                localStorage.removeItem('jwt');
             }
         } catch (error) {
             console.error('Error refreshing user:', error);
+            // On error, clear everything
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('jwt');
         }
     };
 
+    // Initial auth check and token restoration
     useEffect(() => {
-        if (token) {
-            fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-                .then(res => res.ok ? res.json() : Promise.reject())
-                .then(data => setUser(data))
-                .catch(() => setUser(null));
-        } else {
-            setUser(null);
-        }
-        setLoading(false);
-    }, [token]);
+        const initializeAuth = async () => {
+            const storedToken = localStorage.getItem('jwt');
+            if (storedToken) {
+                try {
+                    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+                        headers: { Authorization: `Bearer ${storedToken}` },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setUser(data);
+                        setToken(storedToken);
+                    } else {
+                        // If the token is invalid, clear everything
+                        setUser(null);
+                        setToken(null);
+                        localStorage.removeItem('jwt');
+                    }
+                } catch (error) {
+                    console.error('Error initializing auth:', error);
+                    setUser(null);
+                    setToken(null);
+                    localStorage.removeItem('jwt');
+                }
+            }
+            setLoading(false);
+        };
+
+        initializeAuth();
+    }, []);
 
     const login = async (email, password) => {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {

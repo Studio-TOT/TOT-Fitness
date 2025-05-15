@@ -5,82 +5,91 @@ import Newsletter from "../components/Newsletter";
 import { useAuth } from "../context/AuthContext";
 
 function SubscriptionSuccess() {
-    const nav = useNavigate();
     const [searchParams] = useSearchParams();
-    const sessionId = searchParams.get("session_id");
+    const navigate = useNavigate();
+    const { refreshUser, user } = useAuth();
     const [verificationStatus, setVerificationStatus] = useState('verifying');
-    const { token, refreshUser } = useAuth();
-
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const verifySession = async () => {
+            const sessionId = searchParams.get('session_id');
+            if (!sessionId) {
+                setError('No session ID found');
+                setVerificationStatus('error');
+                return;
+            }
+
             try {
-                if (!token) {
-                    console.error('[SUBSCRIPTION_SUCCESS] No authentication token found');
+                const storedToken = localStorage.getItem('jwt');
+                if (!storedToken) {
+                    setError('Authentication token not found');
                     setVerificationStatus('error');
                     return;
                 }
 
+                console.log('Verifying session with ID:', sessionId);
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/api/subscription/verify-session`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${storedToken}`
                     },
-                    body: JSON.stringify({ sessionId }),
+                    body: JSON.stringify({ sessionId })
                 });
 
-                if (!response.ok) {
-                    console.error('[SUBSCRIPTION_SUCCESS] Verification failed:', response.status);
-                    throw new Error('Failed to verify session');
-                }
-
+                console.log('Verification response status:', response.status);
                 const data = await response.json();
+                console.log('Verification response:', data);
 
-                if (data.success) {
+                if (response.ok) {
+                    console.log('Session verified successfully');
                     setVerificationStatus('success');
-                    // Refresh user data to update premium status
+                    // Refresh user data to get updated premium status
                     await refreshUser();
-                    // Redirect to dashboard after a short delay
+                    // Wait a moment before redirecting to ensure user data is updated
                     setTimeout(() => {
-                        nav('/dashboard');
+                        navigate('/dashboard');
                     }, 2000);
                 } else {
-                    console.error('[SUBSCRIPTION_SUCCESS] Verification unsuccessful:', data);
+                    console.error('Session verification failed:', data.error);
+                    setError(data.error || 'Failed to verify subscription');
                     setVerificationStatus('error');
                 }
-            } catch (error) {
-                console.error('[SUBSCRIPTION_SUCCESS] Error verifying session:', error);
+            } catch (err) {
+                console.error('Error verifying session:', err);
+                setError('An error occurred while verifying your subscription');
                 setVerificationStatus('error');
             }
         };
 
-        if (sessionId) {
+        // Only verify if we have a user
+        if (user) {
             verifySession();
         } else {
-            console.error('[SUBSCRIPTION_SUCCESS] No session ID found in URL');
-            setVerificationStatus('error');
+            // If no user, try to refresh the user data first
+            refreshUser().then(() => {
+                if (user) {
+                    verifySession();
+                } else {
+                    setError('Please log in to verify your subscription');
+                    setVerificationStatus('error');
+                }
+            });
         }
-    }, [sessionId, token, refreshUser, nav]);
+    }, [searchParams, navigate, refreshUser, user]);
 
     const handleNav = () => {
-        nav(-1);
+        navigate(-1);
     };
 
     if (verificationStatus === 'verifying') {
         return (
-            <div className="subscription-cards">
-                <div>
-                    <div className="arrow-title">
-                        <Link to="/" onClick={handleNav}>
-                            <img className="backarrow" src={backarrow} alt="backarrow" />
-                        </Link>{" "}
-                        <h2>Verifying Subscription</h2>
-                    </div>
-                    <p>Please wait while we verify your subscription...</p>
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <h2 className="text-2xl font-semibold text-gray-800">Verifying your subscription...</h2>
+                    <p className="text-gray-600 mt-2">Please wait while we confirm your payment.</p>
                 </div>
             </div>
         );
@@ -88,84 +97,36 @@ function SubscriptionSuccess() {
 
     if (verificationStatus === 'error') {
         return (
-            <div className="subscription-cards">
-                <div>
-                    <div className="arrow-title">
-                        <Link to="/" onClick={handleNav}>
-                            <img className="backarrow" src={backarrow} alt="backarrow" />
-                        </Link>{" "}
-                        <h2>Verification Error</h2>
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg text-center">
+                    <div className="text-red-500 mb-4">
+                        <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
                     </div>
-                    <p>There was an error verifying your subscription. Please contact support.</p>
-                    <Link to="/dashboard">
-                        <button className="black-button">Go to Dashboard</button>
-                    </Link>
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4">Verification Failed</h2>
+                    <p className="text-gray-600 mb-6">{error}</p>
+                    <button
+                        onClick={() => navigate('/subscription')}
+                        className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                        Return to Subscription
+                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="subscription-cards">
-                <div>
-                    <div className="arrow-title">
-                        <Link to="/" onClick={handleNav}>
-                            <img className="backarrow" src={backarrow} alt="backarrow" />
-                        </Link>{" "}
-                        <h2>Subscription Successful</h2>
-                    </div>
-                    <p>
-                        Thank you for subscribing! 🎉<br />
-                        You now have access to all our premium workout programs and healthy recipes.
-                    </p>
-                    <p className="subscription-save" style={{ color: '#4caf50', marginTop: 16 }}>
-                        Your payment was successful.
-                    </p>
-                    <p className="subscription-save" style={{ fontSize: 12, color: '#888' }}>
-                        (Session ID: {sessionId})
-                    </p>
-                    <p className="subscription-save" style={{ color: '#666', marginTop: 16 }}>
-                        Redirecting to dashboard...
-                    </p>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="text-center">
+                <div className="text-green-500 mb-4">
+                    <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                 </div>
-            </div>
-
-            <div className="my-16">
-                <div className="max-w-3xl mx-auto px-4 text-center mb-12">
-                    <h2 className="text-2xl font-bold mb-6">Your Premium Benefits</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        <div className="bg-white rounded-lg shadow-md p-6">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">Premium Workouts</h3>
-                            <p className="text-gray-600">Access all workout programs and custom training plans</p>
-                        </div>
-                        <div className="bg-white rounded-lg shadow-md p-6">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">Nutrition Guide</h3>
-                            <p className="text-gray-600">Full access to all recipes and meal planning tools</p>
-                        </div>
-                        <div className="bg-white rounded-lg shadow-md p-6">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">Exclusive Content</h3>
-                            <p className="text-gray-600">First access to new programs and features</p>
-                        </div>
-                    </div>
-                </div>
-
-                <Newsletter isPremium={true} />
+                <h2 className="text-2xl font-semibold text-gray-800">Subscription Successful!</h2>
+                <p className="text-gray-600 mt-2">Thank you for subscribing. Redirecting to dashboard...</p>
             </div>
         </div>
     );

@@ -24,7 +24,12 @@ const createCheckoutSession = async (req, res) => {
         });
 
         // Create checkout session 
-        const session = await stripe.createCheckoutSession(req.body.priceId, user.id);
+        const session = await stripe.createCheckoutSession(
+            req.body.priceId,
+            user.id,
+            req.body.successUrl,
+            req.body.cancelUrl
+        );
 
         console.log('[CREATE_CHECKOUT] Session created successfully', {
             sessionId: session.id,

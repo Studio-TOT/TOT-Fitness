@@ -42,7 +42,7 @@ const createSubscriptionPlans = async () => {
 };
 
 // Create a checkout session
-const createCheckoutSession = async (priceId, userId) => {
+const createCheckoutSession = async (priceId, userId, successUrl, cancelUrl) => {
     try {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -53,8 +53,8 @@ const createCheckoutSession = async (priceId, userId) => {
                 },
             ],
             mode: 'subscription',
-            success_url: `${process.env.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.FRONTEND_URL}/subscription`,
+            success_url: successUrl || `${process.env.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: cancelUrl || `${process.env.FRONTEND_URL}/subscription`,
             client_reference_id: userId,
         });
 
