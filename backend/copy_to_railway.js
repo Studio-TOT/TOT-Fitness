@@ -30,148 +30,140 @@ async function setupRailwayDatabase(client) {
         // Drop existing tables if they exist
         console.log('Dropping existing tables...');
         await client.query(`
-            DROP TABLE IF EXISTS exercise_images CASCADE;
-            DROP TABLE IF EXISTS exercise_steps CASCADE;
-            DROP TABLE IF EXISTS exercise_details CASCADE;
-            DROP TABLE IF EXISTS exercise_muscles CASCADE;
-            DROP TABLE IF EXISTS exercise_categories CASCADE;
-            DROP TABLE IF EXISTS exercises CASCADE;
-            DROP TABLE IF EXISTS muscles CASCADE;
-            DROP TABLE IF EXISTS categories CASCADE;
-            DROP TABLE IF EXISTS difficulties CASCADE;
-            DROP TABLE IF EXISTS forces CASCADE;
-            DROP TABLE IF EXISTS mechanics CASCADE;
+            DROP TABLE IF EXISTS user_exercise_completion CASCADE;
+            DROP TABLE IF EXISTS program_likes CASCADE;
+            DROP TABLE IF EXISTS user_program_progress CASCADE;
+            DROP TABLE IF EXISTS program_exercises CASCADE;
+            DROP TABLE IF EXISTS program_days CASCADE;
+            DROP TABLE IF EXISTS program_weeks CASCADE;
+            DROP TABLE IF EXISTS programs CASCADE;
+            DROP TABLE IF EXISTS saved_programs CASCADE;
+            DROP TABLE IF EXISTS subscriptions CASCADE;
+            DROP TABLE IF EXISTS users CASCADE;
         `);
 
-        // Create tables
-        console.log('Creating tables...');
+        // Create new tables
+        console.log('Creating new tables...');
         await client.query(`
-            CREATE TABLE exercises (
+            -- Users table
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                stripe_customer_id VARCHAR(255) UNIQUE,
+                is_premium BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+
+            -- Subscriptions table
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                stripe_subscription_id VARCHAR(255) UNIQUE NOT NULL,
+                status VARCHAR(50) NOT NULL,
+                current_period_end TIMESTAMP,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+
+            -- Saved programs table
+            CREATE TABLE IF NOT EXISTS saved_programs (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                program_id VARCHAR(50) NOT NULL,
+                program_data JSONB NOT NULL,
+                program_info JSONB NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, program_id)
+            );
+
+            -- Programs table
+            CREATE TABLE IF NOT EXISTS programs (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
-                name_en_us VARCHAR(255),
-                name_alternative VARCHAR(255),
-                slug VARCHAR(255),
                 description TEXT,
-                description_en_us TEXT,
-                need_warmup BOOLEAN DEFAULT false,
-                advanced_weight INTEGER,
-                featured_weight INTEGER,
-                weight INTEGER,
-                impact INTEGER,
-                use_youtube_links BOOLEAN DEFAULT false,
-                featured BOOLEAN DEFAULT false,
-                sponsered_link BOOLEAN DEFAULT false,
-                status VARCHAR(50),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                type VARCHAR(50) NOT NULL,
+                created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                is_public BOOLEAN DEFAULT false,
+                difficulty VARCHAR(50),
+                duration_weeks INTEGER,
+                image_url VARCHAR(255),
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            CREATE TABLE muscles (
+            -- Program weeks
+            CREATE TABLE IF NOT EXISTS program_weeks (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                name_en_us VARCHAR(255),
-                scientific_name VARCHAR(255),
-                url_name VARCHAR(255),
+                program_id INTEGER REFERENCES programs(id) ON DELETE CASCADE,
+                week_number INTEGER NOT NULL,
                 description TEXT,
-                description_en_us TEXT,
-                lft INTEGER,
-                rght INTEGER,
-                tree_id INTEGER,
-                level INTEGER,
-                parent INTEGER
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(program_id, week_number)
             );
 
-            CREATE TABLE exercise_muscles (
-                exercise_id INTEGER REFERENCES exercises(id),
-                muscle_id INTEGER REFERENCES muscles(id),
-                is_primary BOOLEAN DEFAULT false,
-                is_secondary BOOLEAN DEFAULT false,
-                is_tertiary BOOLEAN DEFAULT false,
-                PRIMARY KEY (exercise_id, muscle_id)
-            );
-
-            CREATE TABLE categories (
+            -- Program days
+            CREATE TABLE IF NOT EXISTS program_days (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                name_en_us VARCHAR(255),
-                include_in_api BOOLEAN DEFAULT true,
-                include_in_workout_generator BOOLEAN DEFAULT true,
-                display_order INTEGER,
-                enable BOOLEAN DEFAULT true,
-                featured BOOLEAN DEFAULT false,
-                image VARCHAR(255),
-                mobile_icon VARCHAR(255),
-                description TEXT
-            );
-
-            CREATE TABLE exercise_categories (
-                exercise_id INTEGER REFERENCES exercises(id),
-                category_id INTEGER REFERENCES categories(id),
-                is_primary BOOLEAN DEFAULT false,
-                PRIMARY KEY (exercise_id, category_id)
-            );
-
-            CREATE TABLE difficulties (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                name_en_us VARCHAR(255)
-            );
-
-            CREATE TABLE forces (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                url_name VARCHAR(255),
-                name_en_us VARCHAR(255),
+                program_week_id INTEGER REFERENCES program_weeks(id) ON DELETE CASCADE,
+                day_number INTEGER NOT NULL,
                 description TEXT,
-                description_en_us TEXT
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(program_week_id, day_number)
             );
 
-            CREATE TABLE mechanics (
+            -- Program exercises
+            CREATE TABLE IF NOT EXISTS program_exercises (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                url_name VARCHAR(255),
-                name_en_us VARCHAR(255),
-                description TEXT,
-                description_en_us TEXT
+                program_day_id INTEGER REFERENCES program_days(id) ON DELETE CASCADE,
+                exercise_id INTEGER REFERENCES exercises(id) ON DELETE CASCADE,
+                sets INTEGER,
+                reps INTEGER,
+                rest_time INTEGER,
+                order_index INTEGER NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            CREATE TABLE exercise_details (
-                exercise_id INTEGER REFERENCES exercises(id),
-                difficulty_id INTEGER REFERENCES difficulties(id),
-                force_id INTEGER REFERENCES forces(id),
-                mechanic_id INTEGER REFERENCES mechanics(id),
-                PRIMARY KEY (exercise_id)
-            );
-
-            CREATE TABLE exercise_steps (
+            -- User program progress
+            CREATE TABLE IF NOT EXISTS user_program_progress (
                 id SERIAL PRIMARY KEY,
-                exercise_id INTEGER REFERENCES exercises(id),
-                order_num INTEGER NOT NULL,
-                text TEXT,
-                text_en_us TEXT,
-                UNIQUE (exercise_id, order_num)
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                program_id INTEGER REFERENCES programs(id) ON DELETE CASCADE,
+                current_week INTEGER DEFAULT 1,
+                current_day INTEGER DEFAULT 1,
+                started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP WITH TIME ZONE,
+                status VARCHAR(50) DEFAULT 'in_progress',
+                UNIQUE(user_id, program_id)
             );
 
-            CREATE TABLE exercise_images (
+            -- User exercise completion tracking
+            CREATE TABLE IF NOT EXISTS user_exercise_completion (
                 id SERIAL PRIMARY KEY,
-                exercise_id INTEGER REFERENCES exercises(id),
-                gender VARCHAR(50),
-                order_num INTEGER,
-                og_image VARCHAR(255),
-                original_video VARCHAR(255),
-                unbranded_video VARCHAR(255),
-                branded_video VARCHAR(255),
-                UNIQUE (exercise_id, gender, order_num)
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                program_exercise_id INTEGER REFERENCES program_exercises(id) ON DELETE CASCADE,
+                completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                completed_date DATE DEFAULT CURRENT_DATE,
+                notes TEXT,
+                rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+                UNIQUE(user_id, program_exercise_id, completed_date)
+            );
+
+            -- Program likes/favorites
+            CREATE TABLE IF NOT EXISTS program_likes (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                program_id INTEGER REFERENCES programs(id) ON DELETE CASCADE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, program_id)
             );
 
             -- Add indexes for better performance
-            CREATE INDEX idx_exercise_muscles_exercise_id ON exercise_muscles(exercise_id);
-            CREATE INDEX idx_exercise_muscles_muscle_id ON exercise_muscles(muscle_id);
-            CREATE INDEX idx_exercise_categories_exercise_id ON exercise_categories(exercise_id);
-            CREATE INDEX idx_exercise_categories_category_id ON exercise_categories(category_id);
-            CREATE INDEX idx_exercise_steps_exercise_id ON exercise_steps(exercise_id);
-            CREATE INDEX idx_exercise_images_exercise_id ON exercise_images(exercise_id);
+            CREATE INDEX IF NOT EXISTS idx_user_program_progress_user_id ON user_program_progress(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_program_progress_program_id ON user_program_progress(program_id);
+            CREATE INDEX IF NOT EXISTS idx_user_exercise_completion_user_id ON user_exercise_completion(user_id);
+            CREATE INDEX IF NOT EXISTS idx_program_likes_user_id ON program_likes(user_id);
+            CREATE INDEX IF NOT EXISTS idx_program_likes_program_id ON program_likes(program_id);
         `);
 
         // Commit transaction
@@ -204,6 +196,8 @@ async function copyData() {
 
         // Get all data from local database
         console.log('Fetching data from local database...');
+        const users = await localClient.query('SELECT * FROM users');
+        const subscriptions = await localClient.query('SELECT * FROM subscriptions');
         const exercises = await localClient.query('SELECT * FROM exercises');
         const muscles = await localClient.query('SELECT * FROM muscles');
         const categories = await localClient.query('SELECT * FROM categories');
@@ -215,7 +209,17 @@ async function copyData() {
         const exerciseDetails = await localClient.query('SELECT * FROM exercise_details');
         const exerciseSteps = await localClient.query('SELECT * FROM exercise_steps');
         const exerciseImages = await localClient.query('SELECT * FROM exercise_images');
+        const programs = await localClient.query('SELECT * FROM programs');
+        const programWeeks = await localClient.query('SELECT * FROM program_weeks');
+        const programDays = await localClient.query('SELECT * FROM program_days');
+        const programExercises = await localClient.query('SELECT * FROM program_exercises');
+        const userProgramProgress = await localClient.query('SELECT * FROM user_program_progress');
+        const userExerciseCompletion = await localClient.query('SELECT * FROM user_exercise_completion');
+        const programLikes = await localClient.query('SELECT * FROM program_likes');
 
+        // Log the number of records found
+        console.log(`Found ${users.rows.length} users`);
+        console.log(`Found ${subscriptions.rows.length} subscriptions`);
         console.log(`Found ${exercises.rows.length} exercises`);
         console.log(`Found ${muscles.rows.length} muscles`);
         console.log(`Found ${categories.rows.length} categories`);
@@ -227,6 +231,67 @@ async function copyData() {
         console.log(`Found ${exerciseDetails.rows.length} exercise details`);
         console.log(`Found ${exerciseSteps.rows.length} exercise steps`);
         console.log(`Found ${exerciseImages.rows.length} exercise images`);
+        console.log(`Found ${programs.rows.length} programs`);
+        console.log(`Found ${programWeeks.rows.length} program weeks`);
+        console.log(`Found ${programDays.rows.length} program days`);
+        console.log(`Found ${programExercises.rows.length} program exercises`);
+        console.log(`Found ${userProgramProgress.rows.length} user program progress records`);
+        console.log(`Found ${userExerciseCompletion.rows.length} user exercise completion records`);
+        console.log(`Found ${programLikes.rows.length} program likes`);
+
+        // Copy users first
+        console.log('Copying users...');
+        for (const user of users.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO users (id, email, stripe_customer_id, is_premium, created_at)
+                    VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (id) DO UPDATE SET
+                        email = EXCLUDED.email,
+                        stripe_customer_id = EXCLUDED.stripe_customer_id,
+                        is_premium = EXCLUDED.is_premium,
+                        created_at = EXCLUDED.created_at`,
+                    [
+                        user.id,
+                        user.email,
+                        user.stripe_customer_id,
+                        user.is_premium,
+                        user.created_at
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying user:', user.id, error.message);
+                throw error;
+            }
+        }
+
+        // Copy subscriptions
+        console.log('Copying subscriptions...');
+        for (const sub of subscriptions.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO subscriptions (id, user_id, stripe_subscription_id, status, current_period_end, created_at)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (id) DO UPDATE SET
+                        user_id = EXCLUDED.user_id,
+                        stripe_subscription_id = EXCLUDED.stripe_subscription_id,
+                        status = EXCLUDED.status,
+                        current_period_end = EXCLUDED.current_period_end,
+                        created_at = EXCLUDED.created_at`,
+                    [
+                        sub.id,
+                        sub.user_id,
+                        sub.stripe_subscription_id,
+                        sub.status,
+                        sub.current_period_end,
+                        sub.created_at
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying subscription:', sub.id, error.message);
+                throw error;
+            }
+        }
 
         // Copy data to Railway
         console.log('Copying data to Railway...');
@@ -523,6 +588,197 @@ async function copyData() {
                 );
             } catch (error) {
                 console.error('Error copying exercise image:', image.id, error.message);
+                throw error;
+            }
+        }
+
+        // Copy program-related data
+        console.log('Copying programs...');
+        for (const program of programs.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO programs (
+                        id, name, description, type, created_by, is_public,
+                        difficulty, duration_weeks, image_url, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = EXCLUDED.name,
+                        description = EXCLUDED.description,
+                        type = EXCLUDED.type,
+                        created_by = EXCLUDED.created_by,
+                        is_public = EXCLUDED.is_public,
+                        difficulty = EXCLUDED.difficulty,
+                        duration_weeks = EXCLUDED.duration_weeks,
+                        image_url = EXCLUDED.image_url,
+                        updated_at = CURRENT_TIMESTAMP`,
+                    [
+                        program.id,
+                        program.name,
+                        program.description,
+                        program.type,
+                        program.created_by,
+                        program.is_public,
+                        program.difficulty,
+                        program.duration_weeks,
+                        program.image_url,
+                        program.created_at,
+                        program.updated_at
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying program:', program.id, error.message);
+                throw error;
+            }
+        }
+
+        console.log('Copying program weeks...');
+        for (const week of programWeeks.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO program_weeks (id, program_id, week_number, description, created_at)
+                    VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (program_id, week_number) DO UPDATE SET
+                        description = EXCLUDED.description`,
+                    [
+                        week.id,
+                        week.program_id,
+                        week.week_number,
+                        week.description,
+                        week.created_at
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying program week:', week.id, error.message);
+                throw error;
+            }
+        }
+
+        console.log('Copying program days...');
+        for (const day of programDays.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO program_days (id, program_week_id, day_number, description, created_at)
+                    VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (program_week_id, day_number) DO UPDATE SET
+                        description = EXCLUDED.description`,
+                    [
+                        day.id,
+                        day.program_week_id,
+                        day.day_number,
+                        day.description,
+                        day.created_at
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying program day:', day.id, error.message);
+                throw error;
+            }
+        }
+
+        console.log('Copying program exercises...');
+        for (const exercise of programExercises.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO program_exercises (
+                        id, program_day_id, exercise_id, sets, reps,
+                        rest_time, order_index, notes, created_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    ON CONFLICT (id) DO UPDATE SET
+                        sets = EXCLUDED.sets,
+                        reps = EXCLUDED.reps,
+                        rest_time = EXCLUDED.rest_time,
+                        order_index = EXCLUDED.order_index,
+                        notes = EXCLUDED.notes`,
+                    [
+                        exercise.id,
+                        exercise.program_day_id,
+                        exercise.exercise_id,
+                        exercise.sets,
+                        exercise.reps,
+                        exercise.rest_time,
+                        exercise.order_index,
+                        exercise.notes,
+                        exercise.created_at
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying program exercise:', exercise.id, error.message);
+                throw error;
+            }
+        }
+
+        console.log('Copying user program progress...');
+        for (const progress of userProgramProgress.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO user_program_progress (
+                        id, user_id, program_id, current_week, current_day,
+                        started_at, completed_at, status
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    ON CONFLICT (user_id, program_id) DO UPDATE SET
+                        current_week = EXCLUDED.current_week,
+                        current_day = EXCLUDED.current_day,
+                        completed_at = EXCLUDED.completed_at,
+                        status = EXCLUDED.status`,
+                    [
+                        progress.id,
+                        progress.user_id,
+                        progress.program_id,
+                        progress.current_week,
+                        progress.current_day,
+                        progress.started_at,
+                        progress.completed_at,
+                        progress.status
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying user program progress:', progress.id, error.message);
+                throw error;
+            }
+        }
+
+        console.log('Copying user exercise completion...');
+        for (const completion of userExerciseCompletion.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO user_exercise_completion (
+                        id, user_id, program_exercise_id, completed_at, completed_date, notes, rating
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    ON CONFLICT (user_id, program_exercise_id, completed_date) DO UPDATE SET
+                        notes = EXCLUDED.notes,
+                        rating = EXCLUDED.rating`,
+                    [
+                        completion.id,
+                        completion.user_id,
+                        completion.program_exercise_id,
+                        completion.completed_at,
+                        completion.completed_date || (completion.completed_at ? completion.completed_at.toISOString().slice(0, 10) : null),
+                        completion.notes,
+                        completion.rating
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying user exercise completion:', completion.id, error.message);
+                throw error;
+            }
+        }
+
+        console.log('Copying program likes...');
+        for (const like of programLikes.rows) {
+            try {
+                await railwayClient.query(
+                    `INSERT INTO program_likes (id, user_id, program_id, created_at)
+                    VALUES ($1, $2, $3, $4)
+                    ON CONFLICT (user_id, program_id) DO NOTHING`,
+                    [
+                        like.id,
+                        like.user_id,
+                        like.program_id,
+                        like.created_at
+                    ]
+                );
+            } catch (error) {
+                console.error('Error copying program like:', like.id, error.message);
                 throw error;
             }
         }
