@@ -1,50 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
 const NodeCache = require('node-cache');
+const { authenticateToken } = require('../middleware/auth');
+const pool = require('../db');
 
 // Create a cache with a TTL of 5 minutes
 const cache = new NodeCache({ stdTTL: 300 });
-
-// Get the appropriate database configuration based on environment
-const getDatabaseConfig = () => {
-
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.DATABASE_URL) {
-      console.error('DATABASE_URL is required in production environment');
-      console.error('Available environment variables:', Object.keys(process.env).join(', '));
-      throw new Error('DATABASE_URL is required in production environment');
-    }
-
-    return {
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    };
-  }
-
-  // In development, use local database configuration
-  if (process.env.LOCAL_DATABASE_URL) {
-    return {
-      connectionString: process.env.LOCAL_DATABASE_URL,
-      ssl: false
-    };
-  }
-
-  // Fallback to individual parameters for local development
-  return {
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      port: process.env.DB_PORT || 5432,
-    ssl: false
-  };
-};
-
-// Get database configuration
-const dbConfig = getDatabaseConfig();
-// Create the connection pool
-const pool = new Pool(dbConfig);
 
 // Transform exercise data to match frontend format
 const transformExercise = (exercise) => {
@@ -124,7 +85,7 @@ router.get('/', async (req, res) => {
       return res.json(cachedData);
     }
 
-    const client = await req.db.connect();
+    const client = await pool.connect();
     try {
       const result = await client.query(`
       SELECT 
@@ -290,7 +251,7 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
       return res.json(cachedData);
     }
 
-    const client = await req.db.connect();
+    const client = await pool.connect();
     try {
       // First, get total count with search
       let countQuery = `
@@ -420,7 +381,7 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
       queryParams.push(limit, offset);
 
       const result = await client.query(query, queryParams);
-    const exercises = result.rows.map(transformExercise);
+      const exercises = result.rows.map(transformExercise);
 
       const response = {
         data: exercises,
@@ -442,6 +403,83 @@ router.get('/bodypart/:bodyPart', async (req, res) => {
   } catch (error) {
     console.error('Error fetching exercises:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get exercise details by ID
+router.get("/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const client = await pool.connect();
+    try {
+      const result = await client.query(`
+        SELECT 
+          e.*,
+          (SELECT d.name FROM difficulties d JOIN exercise_details ed_sub ON d.id = ed_sub.difficulty_id WHERE ed_sub.exercise_id = e.id) as difficulty_name,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', m.id,
+            'name', m.name,
+            'name_en_us', m.name_en_us,
+            'is_primary', em.is_primary,
+            'is_secondary', em.is_secondary,
+            'is_tertiary', em.is_tertiary
+          )) FILTER (WHERE m.id IS NOT NULL) as muscles,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', c.id,
+            'name', c.name,
+            'name_en_us', c.name_en_us,
+            'is_primary', ec.is_primary
+          )) FILTER (WHERE c.id IS NOT NULL) as categories,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', f.id,
+            'name', f.name,
+            'name_en_us', f.name_en_us
+          )) FILTER (WHERE f.id IS NOT NULL) as force,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', me.id,
+            'name', me.name,
+            'name_en_us', me.name_en_us
+          )) FILTER (WHERE me.id IS NOT NULL) as mechanic,
+          json_agg(DISTINCT jsonb_build_object(
+              'id', es.id,
+              'order', es.order_num,
+              'text', es.text,
+              'text_en_us', es.text_en_us
+            )) FILTER (WHERE es.id IS NOT NULL) as steps,
+          json_agg(DISTINCT jsonb_build_object(
+            'id', i.id,
+            'gender', i.gender,
+            'order', i.order_num,
+            'og_image', i.og_image,
+            'original_video', i.original_video,
+            'unbranded_video', i.unbranded_video,
+            'branded_video', i.branded_video
+          )) FILTER (WHERE i.id IS NOT NULL) as images
+        FROM exercises e
+        LEFT JOIN exercise_muscles em ON e.id = em.exercise_id
+        LEFT JOIN muscles m ON em.muscle_id = m.id
+        LEFT JOIN exercise_categories ec ON e.id = ec.exercise_id
+        LEFT JOIN categories c ON ec.category_id = c.id
+        LEFT JOIN exercise_details ed2 ON e.id = ed2.exercise_id
+        LEFT JOIN forces f ON ed2.force_id = f.id
+        LEFT JOIN mechanics me ON ed2.mechanic_id = me.id
+        LEFT JOIN exercise_steps es ON e.id = es.exercise_id
+        LEFT JOIN exercise_images i ON e.id = i.exercise_id
+        WHERE e.id = $1
+        GROUP BY e.id, e.name, e.description, e.name_en_us, e.name_alternative, e.slug, e.description_en_us, e.need_warmup, e.advanced_weight, e.featured_weight, e.weight, e.impact, e.use_youtube_links, e.featured, e.sponsered_link, e.status, e.created_at, e.updated_at
+        LIMIT 1;
+      `, [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Exercise not found" });
+      }
+      const exercise = transformExercise(result.rows[0]);
+      res.json(exercise);
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

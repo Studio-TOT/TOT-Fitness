@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const db = require('../db');
 const cacheService = require('../services/cacheService');
 const transformService = require('../services/transformService');
 const queryBuilderService = require('../services/queryBuilderService');
@@ -133,6 +133,55 @@ class ExerciseModel {
             return parseInt(result.rows[0].total);
         } catch (error) {
             console.error('Error in getTotalCount:', error);
+            throw error;
+        }
+    }
+
+    async create(exerciseData) {
+        try {
+            const { query, params } = queryBuilderService.buildInsertQuery(exerciseData);
+            const result = await db.query(query, params);
+            return transformService.transformExercise(result.rows[0]);
+        } catch (error) {
+            console.error('Error in create:', error);
+            throw error;
+        }
+    }
+
+    async update(id, exerciseData) {
+        try {
+            const { query, params } = queryBuilderService.buildUpdateQuery(id, exerciseData);
+            const result = await db.query(query, params);
+
+            if (result.rows.length === 0) {
+                return null;
+            }
+
+            return transformService.transformExercise(result.rows[0]);
+        } catch (error) {
+            console.error('Error in update:', error);
+            throw error;
+        }
+    }
+
+    async delete(id) {
+        try {
+            const { query, params } = queryBuilderService.buildDeleteQuery(id);
+            const result = await db.query(query, params);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error in delete:', error);
+            throw error;
+        }
+    }
+
+    async findByDifficulty(difficulty) {
+        try {
+            const { query, params } = queryBuilderService.buildExerciseQuery({ difficulty });
+            const result = await db.query(query, params);
+            return transformService.transformExerciseList(result.rows);
+        } catch (error) {
+            console.error('Error in findByDifficulty:', error);
             throw error;
         }
     }

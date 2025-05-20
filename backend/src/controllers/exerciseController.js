@@ -1,7 +1,7 @@
 const exerciseModel = require('../models/exercise');
 
-class ExerciseController {
-    async getAllExercises(req, res) {
+const exerciseController = {
+    getAllExercises: async (req, res) => {
         try {
             const exercises = await exerciseModel.findAll(req.query);
             res.json(exercises);
@@ -9,9 +9,9 @@ class ExerciseController {
             console.error('Error in getAllExercises:', error);
             res.status(500).json({ error: 'Failed to fetch exercises' });
         }
-    }
+    },
 
-    async getExercisesByMuscle(req, res) {
+    getExercisesByMuscle: async (req, res) => {
         try {
             const { muscle } = req.params;
             const exercises = await exerciseModel.findByMuscle(muscle, req.query);
@@ -20,9 +20,9 @@ class ExerciseController {
             console.error('Error in getExercisesByMuscle:', error);
             res.status(500).json({ error: 'Failed to fetch exercises by muscle' });
         }
-    }
+    },
 
-    async getExercisesByBodyPart(req, res) {
+    getExercisesByBodyPart: async (req, res) => {
         try {
             const { bodyPart } = req.params;
             const exercises = await exerciseModel.findByBodyPart(bodyPart, req.query);
@@ -36,9 +36,9 @@ class ExerciseController {
             console.error('Error in getExercisesByBodyPart:', error);
             res.status(500).json({ error: 'Failed to fetch exercises by body part' });
         }
-    }
+    },
 
-    async getExerciseById(req, res) {
+    getExerciseById: async (req, res) => {
         try {
             const { id } = req.params;
             const exercise = await exerciseModel.findById(id);
@@ -52,9 +52,9 @@ class ExerciseController {
             console.error('Error in getExerciseById:', error);
             res.status(500).json({ error: 'Failed to fetch exercise' });
         }
-    }
+    },
 
-    async getExercisesByDifficulty(req, res) {
+    getExercisesByDifficulty: async (req, res) => {
         try {
             const { difficulty } = req.params;
             const exercises = await exerciseModel.findByDifficulty(difficulty);
@@ -63,9 +63,9 @@ class ExerciseController {
             console.error('[GET_EXERCISES_BY_DIFFICULTY] Error:', error);
             res.status(500).json({ error: 'Failed to fetch exercises' });
         }
-    }
+    },
 
-    async createExercise(req, res) {
+    createExercise: async (req, res) => {
         try {
             const exerciseData = req.body;
             const newExercise = await exerciseModel.create(exerciseData);
@@ -74,9 +74,9 @@ class ExerciseController {
             console.error('[CREATE_EXERCISE] Error:', error);
             res.status(500).json({ error: 'Failed to create exercise' });
         }
-    }
+    },
 
-    async updateExercise(req, res) {
+    updateExercise: async (req, res) => {
         try {
             const { id } = req.params;
             const exerciseData = req.body;
@@ -92,9 +92,9 @@ class ExerciseController {
             console.error('[UPDATE_EXERCISE] Error:', error);
             res.status(500).json({ error: 'Failed to update exercise' });
         }
-    }
+    },
 
-    async deleteExercise(req, res) {
+    deleteExercise: async (req, res) => {
         try {
             const { id } = req.params;
             const deletedExercise = await exerciseModel.delete(id);
@@ -109,6 +109,6 @@ class ExerciseController {
             res.status(500).json({ error: 'Failed to delete exercise' });
         }
     }
-}
+};
 
-module.exports = new ExerciseController(); 
+module.exports = exerciseController; 

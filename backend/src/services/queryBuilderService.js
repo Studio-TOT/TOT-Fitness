@@ -156,6 +156,94 @@ class QueryBuilderService {
 
         return { query, params };
     }
+
+    buildInsertQuery(exerciseData) {
+        const {
+            name,
+            description,
+            name_en_us,
+            name_alternative,
+            slug,
+            description_en_us,
+            need_warmup,
+            advanced_weight,
+            featured_weight,
+            weight,
+            impact,
+            use_youtube_links,
+            featured,
+            sponsered_link,
+            status
+        } = exerciseData;
+
+        const params = [
+            name,
+            description,
+            name_en_us,
+            name_alternative,
+            slug,
+            description_en_us,
+            need_warmup,
+            advanced_weight,
+            featured_weight,
+            weight,
+            impact,
+            use_youtube_links,
+            featured,
+            sponsered_link,
+            status
+        ];
+
+        const query = `
+            INSERT INTO exercises (
+                name, description, name_en_us, name_alternative, slug,
+                description_en_us, need_warmup, advanced_weight, featured_weight,
+                weight, impact, use_youtube_links, featured, sponsered_link, status
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+            )
+            RETURNING *
+        `;
+
+        return { query, params };
+    }
+
+    buildUpdateQuery(id, exerciseData) {
+        const updates = [];
+        const params = [];
+        let paramCount = 1;
+
+        // Build the SET clause dynamically based on provided fields
+        Object.entries(exerciseData).forEach(([key, value]) => {
+            if (value !== undefined) {
+                updates.push(`${key} = $${paramCount}`);
+                params.push(value);
+                paramCount++;
+            }
+        });
+
+        // Add the id parameter
+        params.push(id);
+
+        const query = `
+            UPDATE exercises
+            SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $${paramCount}
+            RETURNING *
+        `;
+
+        return { query, params };
+    }
+
+    buildDeleteQuery(id) {
+        const query = `
+            DELETE FROM exercises
+            WHERE id = $1
+            RETURNING *
+        `;
+        return { query, params: [id] };
+    }
 }
 
 module.exports = new QueryBuilderService(); 
