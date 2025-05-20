@@ -11,6 +11,11 @@ import mb1 from "../assets/mb1.png";
 import ct1lock from "../assets/ct1lock.png";
 import sm1lock from "../assets/sm1lock.png";
 import { useAuth } from '../context/AuthContext';
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Progress } from "./ui/progress";
+import { Button } from "./ui/button";
+import { FiTrendingUp, FiCalendar, FiAward } from 'react-icons/fi';
 
 function ProgramsSec() {
   const { user, isPremium } = useAuth();
@@ -19,134 +24,163 @@ function ProgramsSec() {
   // Function to handle subscription clicks
   const handleSubscriptionClick = (e) => {
     e.preventDefault();
-    // If user not logged in, redirect to login with subscription as redirect target
     if (!user) {
       navigate('/login', { state: { from: '/subscription' } });
     } else if (isPremium()) {
-      // If user is already premium, redirect to dashboard
       navigate('/dashboard');
     } else {
-      // If user is logged in but not premium, redirect to subscription page
       navigate('/subscription');
     }
   };
 
+  // Premium user content
+  if (isPremium()) {
+    return (
+      <section className="py-12 px-4 md:px-12 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 max-w-6xl mx-auto mt-10 mb-16">
+        <div className="mb-10 text-center">
+          <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-2">Your Programs</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-lg">
+            Track your progress and continue your fitness journey with our premium programs.
+          </p>
+        </div>
+
+        {/* Progress Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <Card className="bg-white/50 backdrop-blur-sm border border-gray-100/50 shadow-sm hover:shadow-md transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-teal-100/50 rounded-lg">
+                  <FiTrendingUp className="w-5 h-5 text-teal-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Overall Progress</p>
+                  <h3 className="text-2xl font-medium text-gray-800">75%</h3>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/50 backdrop-blur-sm border border-gray-100/50 shadow-sm hover:shadow-md transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-purple-100/50 rounded-lg">
+                  <FiCalendar className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Active Programs</p>
+                  <h3 className="text-2xl font-medium text-gray-800">2</h3>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/50 backdrop-blur-sm border border-gray-100/50 shadow-sm hover:shadow-md transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-blue-100/50 rounded-lg">
+                  <FiAward className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Completed Workouts</p>
+                  <h3 className="text-2xl font-medium text-gray-800">24</h3>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Active Programs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          <Link to="/programs/bodyweight" className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50">
+            <img src={bw1} alt="Bodyweight" className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-200 group-hover:scale-105" />
+            <h3 className="text-lg font-medium text-gray-800 mb-1">Bodyweight</h3>
+            <p className="text-sm text-gray-500 text-center">Train anywhere, no equipment needed</p>
+            <div className="w-full mt-4">
+              <Progress value={65} className="h-1.5 bg-gray-100/50" />
+              <p className="text-xs text-gray-500 mt-1">65% Complete</p>
+            </div>
+          </Link>
+
+          <Link to="/programs/bootypump" className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50">
+            <img src={bp1} alt="Booty Pump" className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-200 group-hover:scale-105" />
+            <h3 className="text-lg font-medium text-gray-800 mb-1">Booty Pump</h3>
+            <p className="text-sm text-gray-500 text-center">Sculpt and strengthen your glutes</p>
+            <div className="w-full mt-4">
+              <Progress value={85} className="h-1.5 bg-gray-100/50" />
+              <p className="text-xs text-gray-500 mt-1">85% Complete</p>
+            </div>
+          </Link>
+
+          <Link to="/programs/cardiotraining" className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50">
+            <img src={ct1lock} alt="Cardio Training" className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-200 group-hover:scale-105" />
+            <h3 className="text-lg font-medium text-gray-800 mb-1">Cardio Training</h3>
+            <p className="text-sm text-gray-500 text-center">Boost your endurance and stamina</p>
+            <Button className="mt-4 w-full bg-teal-500 hover:bg-teal-600 text-white">Start Program</Button>
+          </Link>
+        </div>
+
+        <div className="mt-10 text-center">
+          <Button
+            onClick={() => navigate('/programs')}
+            className="inline-flex items-center px-5 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-medium"
+          >
+            View All Programs
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  // Non-premium user content (original content)
   return (
-    <div className="m-2.5 p-4 md:m-10 md:flex md:flex-row md:flex-wrap md:justify-between" id="prog">
-      <div className="programtext">
-        <h2 className="my-8 text-[1.6rem] md:text-[2.8rem] mb-[30px]">Explore our programs</h2>
-        <div className="Description">
-          {" "}
-          Do you want to reach your fitness goals ? {"\n"} {"\n"} We have
-          selected the best programs made by our coaches to bring you to the
-          next level ! Thousands of people have already changed their lives
-          thanks to our application. Why not yours ?
-          <div className="descriptiondesk">
-            {" "}
-            Want to get full access to our programs ? {"\n"} {"\n"} Click below
-            to get a look at our subscription page and chose the plan that fits
-            you the best !{" "}
-            <Link
-              className="linkcard"
-              onClick={handleSubscriptionClick}
-              to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"}
-              id="suscriptionprogsec2"
-            >
-              <Start content="Click Here" />
-            </Link>
-          </div>
+    <section className="py-12 px-4 md:px-12 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 max-w-6xl mx-auto mt-10 mb-16">
+      <div className="mb-10 text-center">
+        <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-2">Explore our programs</h2>
+        <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-lg">
+          Do you want to reach your fitness goals? We have selected the best programs made by our coaches to bring you to the next level. Thousands of people have already changed their lives thanks to our application. Why not yours?
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-10">
+        <Link to="/programs/bodyweight" className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50">
+          <img src={bw1} alt="Bodyweight" className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-200 group-hover:scale-105" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">Bodyweight</h3>
+          <p className="text-sm text-gray-500 text-center">Train anywhere, no equipment needed</p>
+        </Link>
+        <Link to="/programs/bootypump" className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50">
+          <img src={bp1} alt="Booty Pump" className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-200 group-hover:scale-105" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">Booty Pump</h3>
+          <p className="text-sm text-gray-500 text-center">Sculpt and strengthen your glutes</p>
+        </Link>
+        <Link to="/programs/fullbody" className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50">
+          <img src={fb1} alt="Full Body" className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-200 group-hover:scale-105" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">Full Body</h3>
+          <p className="text-sm text-gray-500 text-center">Balanced workouts for all muscle groups</p>
+        </Link>
+        <Link to="/programs/musclebuilding" className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50">
+          <img src={mb1} alt="Muscle Building" className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-200 group-hover:scale-105" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">Muscle Building</h3>
+          <p className="text-sm text-gray-500 text-center">Build strength and muscle mass</p>
+        </Link>
+        <div className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50 cursor-pointer relative">
+          <img src={ct1lock} alt="Premium Program" className="w-full h-48 object-cover rounded-lg mb-4 opacity-70 group-hover:scale-105 transition-transform duration-200" />
+          <div className="absolute top-4 right-4 bg-gray-900/80 text-white text-xs px-2 py-1 rounded">Premium</div>
+          <h3 className="text-lg font-medium text-gray-800 mb-1">Cardio Training</h3>
+          <p className="text-sm text-gray-500 text-center">Unlock with Premium</p>
+          <button onClick={handleSubscriptionClick} className="mt-2 text-xs font-medium text-gray-600 hover:text-gray-900 underline">Learn More</button>
+        </div>
+        <div className="group rounded-xl bg-white/70 border border-gray-100/60 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col items-center p-4 hover:bg-gray-50 cursor-pointer relative">
+          <img src={sm1lock} alt="Premium Program" className="w-full h-48 object-cover rounded-lg mb-4 opacity-70 group-hover:scale-105 transition-transform duration-200" />
+          <div className="absolute top-4 right-4 bg-gray-900/80 text-white text-xs px-2 py-1 rounded">Premium</div>
+          <h3 className="text-lg font-medium text-gray-800 mb-1">Summer Shred</h3>
+          <p className="text-sm text-gray-500 text-center">Unlock with Premium</p>
+          <button onClick={handleSubscriptionClick} className="mt-2 text-xs font-medium text-gray-600 hover:text-gray-900 underline">Learn More</button>
         </div>
       </div>
-      <div className="imagegalery">
-        <div className="cardbw1">
-          {" "}
-          <Link className="linkcard" to="/programs/bodyweight">
-            <img src={bw1} alt="bw1" width="225" height="225" />
-          </Link>
-        </div>
-        <div className="cardbp1">
-          <Link className="linkcard" to="/programs/bootypump">
-            <img src={bp1} alt="bp1" width="225" height="225" />
-          </Link>
-        </div>
-        <div className="cardfb1">
-          {" "}
-          <Link className="linkcard" to="/programs/fullbody">
-            <img src={fb1} alt="fb1" width="225" height="225" />
-          </Link>
-        </div>
-        <div className="cardmb1">
-          <Link className="linkcard" to="/programs/musclebuilding">
-            <img src={mb1} alt="mb1" width="225" height="225" />
-          </Link>
-        </div>
-        <div className="cardct1 relative">
-          <Link
-            className="linkcard"
-            onClick={handleSubscriptionClick}
-            to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"}
-          >
-            <img src={ct1lock} alt="ct1lock" width="225" height="225" />
-          </Link>
-        </div>
-        <div className="cardsm1 relative">
-          <Link
-            className="linkcard"
-            onClick={handleSubscriptionClick}
-            to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"}
-          >
-            <img src={sm1lock} alt="sm1lock" width="225" height="225" />
-          </Link>
-        </div>
+      <div className="mt-10 text-center">
+        <p className="text-gray-600 mb-4">Want to get full access to all programs? <br /> Click below to see our subscription plans and choose the one that fits you best!</p>
+        <button onClick={handleSubscriptionClick} className="inline-flex items-center px-5 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-medium">See Subscription Options</button>
       </div>
-      <Swiper
-        spaceBetween={30}
-        pagination
-        modules={[Pagination]}
-        className="ProgramsSec"
-      >
-        <SwiperSlide className="Card1">
-          <Link className="linkcard" to="/programs/bootypump" />
-        </SwiperSlide>
-        <SwiperSlide className="Card2">
-          <Link className="linkcard" to="/programs/musclebuilding" />
-        </SwiperSlide>
-        <SwiperSlide className="Card3">
-          {" "}
-          <Link className="linkcard" to="/programs/fullbody" />
-        </SwiperSlide>{" "}
-        <SwiperSlide className="Card4">
-          <Link className="linkcard" to="/programs/bodyweight" />
-        </SwiperSlide>{" "}
-        <SwiperSlide className="Card5">
-          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"} />
-        </SwiperSlide>
-        <SwiperSlide className="Card6">
-          <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"} />
-        </SwiperSlide>
-      </Swiper>
-      {/* {!user && (
-        <div className="w-full mt-8 mb-6 p-6 bg-gray-100 rounded-lg text-center">
-          <p className="mb-6 text-lg text-gray-700 font-medium">You need to sign in to access premium content</p>
-          <div className="flex flex-col md:flex-row justify-center md:space-x-6 space-y-4 md:space-y-0">
-            <Link to="/login" className="bg-indigo-600 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-indigo-700 transition-colors">
-              Sign In
-            </Link>
-            <Link to="/signup" className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-green-700 transition-colors">
-              Create Account
-            </Link>
-          </div>
-        </div>
-      )} */}
-      <div className="Description" id="descriptiondesk">
-        Want to get full access to our programs ? {"\n"} {"\n"} Click below to
-        get a look at our subscription page and chose the plan that fits you the
-        best !{" "}
-      </div>
-      <Link className="linkcard" onClick={handleSubscriptionClick} to={user ? (isPremium() ? "/dashboard" : "/subscription") : "#"} id="suscriptionprogsec">
-        <Start content="Click Here" />
-      </Link>
-    </div>
+    </section>
   );
 }
 

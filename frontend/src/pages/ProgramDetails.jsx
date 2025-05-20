@@ -24,12 +24,13 @@ import {
 function ProgramDetails() {
     const { programId } = useParams();
     const navigate = useNavigate();
-    const { isPremium, user } = useAuth();
+    const { isPremium, user, token } = useAuth();
     const { exercises, isLoading, error, fetchExercises } = useExercises();
     const [program, setProgram] = useState([]);
     const [expandedWeek, setExpandedWeek] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const [errorMessage, setError] = useState(null);
 
     const programs = [
         {
@@ -109,6 +110,31 @@ function ProgramDetails() {
         setProgram(generatedProgram || []);
     }, [programId, exercises]);
 
+    useEffect(() => {
+        const checkIfProgramSaved = async () => {
+            if (!user || !token) return;
+
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/saved-programs`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const isProgramSaved = Array.isArray(data) && data.some(program => program.program_id === programId);
+                    setIsSaved(isProgramSaved);
+                }
+            } catch (error) {
+                console.error("Error checking saved programs:", error);
+                setIsSaved(false);
+            }
+        };
+
+        checkIfProgramSaved();
+    }, [user, token, programId]);
+
     const handleNav = () => {
         navigate(-1);
     };
@@ -159,33 +185,69 @@ function ProgramDetails() {
 
     const handleSaveProgram = async () => {
         if (!user) {
-            navigate('/login', { state: { from: `/programs/${programId}` } });
+            setError("Please log in to save programs");
+            return;
+        }
+
+        if (!token) {
+            setError("Authentication token not found. Please log in again.");
             return;
         }
 
         setIsSaving(true);
+        setError(null);
+
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/save-program`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+            // Create a simplified program data structure
+            const simplifiedProgramData = {
+                programId: programId,
+                programData: {
+                    id: programId,
+                    title: programInfo.title,
+                    description: programInfo.description,
+                    longDescription: programInfo.longDescription,
+                    weeks: program.map((week, weekIndex) => ({
+                        weekNumber: weekIndex + 1,
+                        days: week.map((day, dayIndex) => ({
+                            dayNumber: dayIndex + 1,
+                            exercises: day.map(exercise => ({
+                                id: exercise.id,
+                                name: exercise.name,
+                                sets: exercise.sets,
+                                reps: exercise.reps,
+                                restTime: exercise.restTime
+                            }))
+                        }))
+                    }))
                 },
-                body: JSON.stringify({
-                    programId,
-                    programData: program,
-                    programInfo: getProgramInfo()
-                })
+                programInfo: {
+                    title: programInfo.title,
+                    description: programInfo.description,
+                    longDescription: programInfo.longDescription
+                }
+            };
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/save-program`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(simplifiedProgramData),
             });
 
-            if (response.ok) {
-                setIsSaved(true);
-            } else {
-                throw new Error('Failed to save program');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error("Error response:", errorData);
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
+
+            const data = await response.json();
+            setIsSaved(true);
         } catch (error) {
-            console.error('Error saving program:', error);
-            // You might want to show an error message to the user here
+            console.error("Error saving program:", error);
+            setError(error.message || "Failed to save program. Please try again.");
+            setIsSaved(false);
         } finally {
             setIsSaving(false);
         }
@@ -239,8 +301,8 @@ function ProgramDetails() {
                                 onClick={handleSaveProgram}
                                 disabled={isSaving || isSaved}
                                 className={`px-6 py-2 rounded-full font-medium transition-all ${isSaved
-                                        ? 'bg-green-500 text-white cursor-default'
-                                        : 'bg-white text-indigo-600 hover:bg-gray-100'
+                                    ? 'bg-green-500 text-white cursor-default'
+                                    : 'bg-white text-indigo-600 hover:bg-gray-100'
                                     }`}
                             >
                                 {isSaving ? 'Saving...' : isSaved ? 'Saved to Dashboard' : 'Save to Dashboard'}

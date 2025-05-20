@@ -21,6 +21,8 @@ import NutritionPreview from "./components/NutritionPreview";
 import nutrition from "./data";
 import { ExerciseProvider } from "./context/ExerciseContext";
 import { AuthProvider } from "./context/AuthContext";
+import ProgramWorkout from "./components/ProgramWorkout";
+import ExerciseDetails from './pages/ExerciseDetails';
 
 // Layout component to wrap pages with Navbar and Footer
 function Layout({ children, isTransparentNav }) {
@@ -123,6 +125,16 @@ function App() {
               </Layout>
             }
           />
+          <Route
+            path="/programs/:programId/workout/:week/:day"
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <ProgramWorkout />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
 
           {/* Protected Routes - Authentication Required */}
           <Route
@@ -157,6 +169,8 @@ function App() {
               </Layout>
             }
           />
+
+          <Route path="/exercises/:exerciseId" element={<ExerciseDetails />} />
         </Routes>
       </ExerciseProvider>
     </AuthProvider>

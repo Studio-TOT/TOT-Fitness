@@ -1,193 +1,180 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/swiper-bundle.min.css";
-import "swiper/swiper.min.css";
-
-import { Pagination } from "swiper";
-import { Link, useNavigate } from "react-router-dom";
-import backarrow from "../assets/back-arrow.svg";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../components/ui/button";
+import { ArrowLeft, ChevronDown } from "lucide-react";
+import Masonry from '../components/Masonry';
 
 function NutritionPage({ data }) {
   const nav = useNavigate();
   const handleNav = () => {
     nav(-1);
   };
+
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [activeCategory, setActiveCategory] = useState("Starter");
+  const ITEMS_PER_CATEGORY = 6;
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Validate and filter data
+  const validData = Array.isArray(data) ? data.filter(recipe =>
+    recipe &&
+    typeof recipe === 'object' &&
+    recipe.strCategory &&
+    recipe.strMealThumb &&
+    recipe.strMeal &&
+    recipe.idMeal
+  ) : [];
+
+  // Define the order of categories
+  const categoryOrder = [
+    "Starter",
+    "Chicken",
+    "Vegetarian",
+    "Beef",
+    "Seafood",
+    "Dessert"
+  ];
+
+  // Group recipes by category
+  const recipesByCategory = validData.reduce((acc, recipe) => {
+    const category = recipe.strCategory;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push({
+      id: recipe.idMeal,
+      image: recipe.strMealThumb,
+      text: recipe.strMeal,
+      height: Math.random() * 400 + 400
+    });
+    return acc;
+  }, {});
+
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  // If no valid data, show a message
+  if (validData.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <Button
+            variant="ghost"
+            className="mb-6"
+            onClick={handleNav}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold mb-4">No Recipes Available</h2>
+            <p className="text-muted-foreground">Please check back later for new recipes.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentRecipes = recipesByCategory[activeCategory] || [];
+
   return (
-    <div key={data.idMeal}>
-      <section className="NutritionPage">
-        <div className="arrow-title">
-          <Link to="/" onClick={handleNav}>
-            <img className="backarrow" src={backarrow} alt="backarrow" />
-          </Link>{" "}
-          <h2>Nutrition</h2>
+    <div className="min-h-screen bg-background">
+      {/* Full-width banner with image and scroll effect */}
+      <div className="w-full h-[400px] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/images/nutrition-banner.jpg"
+            alt="Nutrition Banner"
+            className="w-full h-full object-cover"
+          />
         </div>
-        <div className="Nutrition-banner">
-          <p>Eat clean.</p>
-          <p>Reach your goals.</p>
+        <div className="relative h-full flex items-center">
+          <div className="container mx-auto px-4">
+            <div className="Nutrition-banner">
+              <p className="text-4xl md:text-5xl font-bold text-white mb-4">Eat clean.</p>
+              <p className="text-2xl md:text-3xl text-white/90">Reach your goals.</p>
+            </div>
+          </div>
         </div>
-        <div className="NutritionGalery">
-          <h3>Starter</h3>
-          <Swiper
-            spaceBetween={30}
-            pagination={{
-              dynamicBullets: true,
-            }}
-            modules={[Pagination]}
-            className="NutritionSlide"
-            slidesPerView={window.innerWidth > 800 ? 4 : 1}
-          >
-            {data &&
-              data
-                .slice(0, 200)
-                .filter((e) => e.strCategory === "Starter")
-                .map((e) => {
-                  return (
-                    <SwiperSlide key={e.idMeal}>
-                      <Link to={`/Nutritionpage/${e.idMeal}`}>
-                        <img src={e.strMealThumb} alt={e.strMeal} />
-                      </Link>
-                      <h4>{e.strMeal}</h4>
-                    </SwiperSlide>
-                  );
-                })}
-          </Swiper>
-          <h3>Chicken</h3>
-          <Swiper
-            spaceBetween={30}
-            pagination={{
-              dynamicBullets: true,
-            }}
-            modules={[Pagination]}
-            className="NutritionSlide"
-            slidesPerView={window.innerWidth > 800 ? 4 : 1}
-          >
-            {data &&
-              data
-                .slice(30, 200)
-                .filter((e) => e.strCategory === "Chicken")
-                .map((e) => {
-                  return (
-                    <SwiperSlide key={e.idMeal}>
-                      <Link to={`/Nutritionpage/${e.idMeal}`}>
-                        <img src={e.strMealThumb} alt={e.strMeal} />
-                      </Link>
-                      <h4>{e.strMeal}</h4>
-                    </SwiperSlide>
-                  );
-                })}
-          </Swiper>
-          <h3>Vegetarian</h3>
-          <Swiper
-            spaceBetween={30}
-            pagination={{
-              dynamicBullets: true,
-            }}
-            modules={[Pagination]}
-            className="NutritionSlide"
-            slidesPerView={window.innerWidth > 800 ? 4 : 1}
-          >
-            {data &&
-              data
-                .slice(40, 200)
-                .filter((e) => e.strCategory === "Vegetarian")
-                .map((e) => {
-                  return (
-                    <SwiperSlide key={e.idMeal}>
-                      <Link to={`/Nutritionpage/${e.idMeal}`}>
-                        <img src={e.strMealThumb} alt={e.strMeal} />
-                      </Link>
-                      <h4>{e.strMeal}</h4>
-                    </SwiperSlide>
-                  );
-                })}
-          </Swiper>
-          <h3>Beef</h3>
-          <Swiper
-            spaceBetween={30}
-            pagination={{
-              dynamicBullets: true,
-            }}
-            modules={[Pagination]}
-            className="NutritionSlide"
-            slidesPerView={window.innerWidth > 800 ? 4 : 1}
-          >
-            {data &&
-              data
-                .slice(20, 200)
-                .filter((e) => e.strCategory === "Beef")
-                .map((e) => {
-                  return (
-                    <SwiperSlide key={e.idMeal}>
-                      <Link to={`/Nutritionpage/${e.idMeal}`}>
-                        <img src={e.strMealThumb} alt={e.strMeal} />
-                      </Link>
-                      <h4>{e.strMeal}</h4>
-                    </SwiperSlide>
-                  );
-                })}
-          </Swiper>
-          <h3>Sea Food</h3>
-          <Swiper
-            spaceBetween={30}
-            pagination={{
-              dynamicBullets: true,
-            }}
-            modules={[Pagination]}
-            className="NutritionSlide"
-            slidesPerView={window.innerWidth > 800 ? 4 : 1}
-          >
-            {data &&
-              data
-                .slice(0, 200)
-                .filter((e) => e.strCategory === "Seafood")
-                .map((e) => {
-                  return (
-                    <SwiperSlide key={e.idMeal}>
-                      <Link to={`/Nutritionpage/${e.idMeal}`}>
-                        <img src={e.strMealThumb} alt={e.strMeal} />
-                      </Link>
-                      <h4>{e.strMeal}</h4>
-                    </SwiperSlide>
-                  );
-                })}
-          </Swiper>
-          <h3>Dessert</h3>
-          <Swiper
-            spaceBetween={30}
-            pagination={{
-              dynamicBullets: true,
-            }}
-            modules={[Pagination]}
-            className="NutritionSlide"
-            slidesPerView={window.innerWidth > 800 ? 4 : 1}
-          >
-            {data &&
-              data
-                .slice(1, 200)
-                .filter((e) => e.strCategory === "Dessert")
-                .map((e) => {
-                  return (
-                    <SwiperSlide key={e.idMeal}>
-                      <Link to={`/Nutritionpage/${e.idMeal}`}>
-                        <img src={e.strMealThumb} alt={e.strMeal} />
-                      </Link>
-                      <h4>{e.strMeal}</h4>
-                    </SwiperSlide>
-                  );
-                })}
-          </Swiper>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          className="mb-6"
+          onClick={handleNav}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+
+        {/* Category Menu */}
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4 mb-8 border-b">
+          <div className="flex items-center justify-center space-x-4 overflow-x-auto pb-2">
+            {categoryOrder.map((category) => (
+              <Button
+                key={category}
+                variant={activeCategory === category ? "default" : "ghost"}
+                onClick={() => setActiveCategory(category)}
+                className={`whitespace-nowrap ${activeCategory === category
+                  ? "bg-teal-500 text-white hover:bg-teal-600"
+                  : "hover:bg-teal-50"
+                  }`}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
         </div>
-      </section>
+
+        {/* Selected Category Content */}
+        <div className="space-y-6">
+          <h3 className="text-2xl font-bold">{activeCategory}</h3>
+          <div className={`w-full transition-all duration-300 ${expandedCategories[activeCategory] ? 'min-h-[600px]' : 'h-[600px]'}`}>
+            <Masonry
+              data={expandedCategories[activeCategory]
+                ? currentRecipes
+                : currentRecipes.slice(0, ITEMS_PER_CATEGORY)
+              }
+              onItemClick={(item) => nav(`/Nutritionpage/${item.id}`)}
+            />
+          </div>
+          {currentRecipes.length > ITEMS_PER_CATEGORY && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="ghost"
+                onClick={() => toggleCategory(activeCategory)}
+                className="text-teal-500 hover:text-teal-600"
+              >
+                {expandedCategories[activeCategory] ? 'Show Less' : 'Show More'}
+                <ChevronDown
+                  className={`ml-2 h-4 w-4 transition-transform ${expandedCategories[activeCategory] ? 'rotate-180' : ''
+                    }`}
+                />
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 NutritionPage.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape).isRequired,
+  data: PropTypes.arrayOf(PropTypes.shape({
+    strCategory: PropTypes.string,
+    strMealThumb: PropTypes.string,
+    strMeal: PropTypes.string,
+    idMeal: PropTypes.string
+  })).isRequired,
 };
 
 export default NutritionPage;

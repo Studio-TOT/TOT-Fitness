@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import { Button } from "./ui/button";
 
 function Newsletter({ isPremium }) {
   const [email, setEmail] = useState("");
@@ -60,37 +61,36 @@ function Newsletter({ isPremium }) {
 
   return (
     <div className="sectionNews h-screen flex items-center justify-center">
-      <div className="newsletter w-[75%] max-w-md backdrop-blur-[2px] rounded-2xl border border-white bg-[#908c8c86] shadow-lg p-6 text-center">
-        <h2 className="text-2xl md:text-3xl uppercase font-semibold text-white mb-6 text-shadow">
-          Subscribe to the<br />newsletter
-        </h2>
+      <div className="py-12 px-4 md:px-12 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 max-w-6xl mx-auto mt-10 mb-16">
+        <div className="mb-10 text-center">
+          <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-2">Subscribe to our Newsletter</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-lg">
+            Be the first to know about new programs, recipes, and exclusive content.
+            {isPremium && (
+              <span className="block mt-2 text-indigo-600 font-medium">
+                Get exclusive premium content updates!
+              </span>
+            )}
+          </p>
+        </div>
 
-        <p className="text-white text-left mx-auto mb-6 text-shadow w-[90%]">
-          Be the first to know about the release of our upcoming fitness programs.
-          {isPremium && (
-            <span className="block mt-2 text-yellow-300 font-medium">
-              Exclusive premium content for members!
-            </span>
-          )}
-        </p>
-
-        <form onSubmit={handleSubmit} className="w-full">
-          <div className="mb-3">
+        <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+          <div className="mb-4">
             <input
               type="email"
-              placeholder="Email Address"
+              placeholder="Enter your email"
               value={email}
               onChange={handleEmailChange}
               disabled={isSubmitting}
-              className={`w-[80%] py-2 px-4 border border-gray-300 rounded-full text-center shadow-md focus:outline-none
-                ${!isValid ? "border-red-500" : ""}`}
+              className={`w-full py-3 px-4 rounded-lg border ${!isValid ? "border-red-500" : "border-gray-300"
+                } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all`}
             />
 
             {message.type && (
               <div
-                className={`mt-2 mx-auto w-[90%] px-3 py-1 rounded-md text-sm text-center ${message.type === "success"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
+                className={`mt-2 px-3 py-2 rounded-lg text-sm text-center ${message.type === "success"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
                   }`}
               >
                 {message.text}
@@ -98,10 +98,10 @@ function Newsletter({ isPremium }) {
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 bg-white text-black font-semibold py-2 px-8 rounded-full shadow-md hover:bg-gray-50 transition-colors"
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105"
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
@@ -120,12 +120,12 @@ function Newsletter({ isPremium }) {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Loading...
+                Subscribing...
               </div>
             ) : (
-              "Subscribe"
+              "Subscribe Now"
             )}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

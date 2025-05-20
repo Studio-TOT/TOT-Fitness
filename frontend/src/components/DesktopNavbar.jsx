@@ -34,16 +34,6 @@ function DesktopNavbar({ navItems, navBackground, user, logout, setAuthOpen, ico
                                         PRO
                                     </span>
                                 )}
-                                {item.isPremium && (
-                                    <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-1 hidden group-hover:block">
-                                        <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                                            Premium feature
-                                            <svg className="absolute text-gray-900 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255">
-                                                <polygon className="fill-current" points="0,0 127.5,127.5 255,0" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                )}
                             </Link>
                         ) : (
                             <a href={item.href} onClick={e => handleScroll(e, item.scrollId)}>{item.label}</a>

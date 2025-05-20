@@ -3,19 +3,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-
 import "swiper/swiper-bundle.min.css";
 import "swiper/swiper.min.css";
-
 import { Pagination } from "swiper";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Day from "../components/Day";
-import mb1 from "../assets/mb1.png";
-import bw1 from "../assets/bw1.png";
-import backarrow from "../assets/back-arrow.svg";
+import { FiUser, FiLogOut, FiAward, FiActivity, FiCalendar, FiLock } from "react-icons/fi";
 import { useExercises } from "../context/ExerciseContext";
 import {
   generateBootyPumpProgram,
@@ -24,6 +15,12 @@ import {
   generateBodyweightProgram,
 } from "../utils/programGenerator";
 import { useAuth } from "../context/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import ProgramProgress from "../components/ProgramProgress";
+import mb1 from "../assets/mb1.png";
+import bw1 from "../assets/bw1.png";
+import ProgressOverview from "../components/ProgressOverview";
 
 export default function Dashboard() {
   const { exercises, isLoading, error, fetchExercises } = useExercises();
@@ -36,13 +33,13 @@ export default function Dashboard() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [weekLeft, setWeekLeft] = useState(12);
   const [openPopUp, setOpenPopUp] = useState(false);
-  const [imgSelect, setImgSelect] = useState(1);
   const nav = useNavigate();
-  const [activeTab, setActiveTab] = useState("profile");
   const { user, logout, isPremium } = useAuth();
+  const [activePrograms, setActivePrograms] = useState([]);
+  const [savedPrograms, setSavedPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only fetch exercises if we don't have them yet
     if (!exercises || exercises.length === 0) {
       fetchExercises();
     }
@@ -58,7 +55,6 @@ export default function Dashboard() {
       };
       setPrograms(generatedPrograms);
     } else {
-      // Create empty program structure for all program types
       const emptyProgram = Array(12).fill().map(() => Array(3).fill().map(() => []));
       setPrograms({
         bootypump: emptyProgram,
@@ -71,6 +67,52 @@ export default function Dashboard() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    const fetchActivePrograms = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/programs`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Handle saved programs
+        const savedPrograms = data.savedPrograms.map(program => ({
+          id: program.id,
+          program_id: program.program_id,
+          title: program.program_info.title,
+          description: program.program_info.description,
+          status: "saved",
+          total_exercises: program.program_data.weeks.reduce((acc, week) =>
+            acc + week.days.reduce((dayAcc, day) => dayAcc + day.exercises.length, 0), 0),
+          completed_exercises: 0 // Since it's saved but not started
+        }));
+
+        // Handle predefined programs
+        const predefinedPrograms = data.predefinedPrograms || [];
+
+        // Combine and filter active programs
+        const allPrograms = [...savedPrograms, ...predefinedPrograms];
+        setActivePrograms(allPrograms.filter(program => program.status === "in_progress"));
+        setSavedPrograms(savedPrograms);
+      } catch (error) {
+        console.error("Error fetching active programs:", error);
+        setActivePrograms([]);
+        setSavedPrograms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivePrograms();
   }, []);
 
   const handleNav = () => {
@@ -96,316 +138,330 @@ export default function Dashboard() {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading dashboard...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error">Error loading dashboard: {error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-red-600 mb-4">Error Loading Dashboard</h2>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
   }
 
-  const progMuscleBuilding = weekArr.map((week, weekIndex) => {
-    const weekExercises = programs.musclebuilding[weekIndex] || [];
-    return (
-      <div key={`week-${week}`}>
-        <Accordion
-          sx={{
-            backgroundColor: "white !important",
-            borderRadius: "16px !important",
-            border: "none",
-            color: "black",
-            margin: "4px auto 4px auto",
-            width: "100%",
-            fontFamily: "Arial !important",
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
-          >
-            <input
-              type="checkbox"
-              className="validate"
-              onClick={(e) => {
-                handleCheck(e);
-                setWeekLeft(11 - weekIndex);
-              }}
-            />
-            <p>Week {weekIndex + 1}</p>
-          </AccordionSummary>
-          <AccordionDetails>
-            {dayArr.map((day, dayIndex) => {
-              const dayExercises = weekExercises[dayIndex] || [];
-              return (
-                <Day
-                  key={`day-${day}`}
-                  day={day}
-                  exercises={dayExercises}
-                />
-              );
-            })}
-          </AccordionDetails>
-        </Accordion>
-      </div>
-    );
-  });
-
-  const progBodyweight = weekArr.map((week, weekIndex) => {
-    const weekExercises = programs.bodyweight[weekIndex] || [];
-    return (
-      <div key={`week-${week}`}>
-        <Accordion
-          sx={{
-            backgroundColor: "white !important",
-            borderRadius: "16px !important",
-            border: "none",
-            color: "black",
-            margin: "4px auto 4px auto",
-            width: "100%",
-            fontFamily: "Arial !important",
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
-          >
-            <input
-              type="checkbox"
-              className="validate"
-              onClick={(e) => {
-                handleCheck(e);
-                setWeekLeft(11 - weekIndex);
-              }}
-            />
-            <p>Week {weekIndex + 1}</p>
-          </AccordionSummary>
-          <AccordionDetails>
-            {dayArr.map((day, dayIndex) => {
-              const dayExercises = weekExercises[dayIndex] || [];
-              return (
-                <Day
-                  key={`day-${day}`}
-                  day={day}
-                  exercises={dayExercises}
-                />
-              );
-            })}
-          </AccordionDetails>
-        </Accordion>
-      </div>
-    );
-  });
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <h1 className="text-3xl font-bold mb-8 text-center">Dashboard</h1>
-
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-8">
-        <button
-          className={`py-3 px-6 font-medium text-lg ${activeTab === "profile"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-            }`}
-          onClick={() => setActiveTab("profile")}
-        >
-          Profile
-        </button>
-        <button
-          className={`py-3 px-6 font-medium text-lg ${activeTab === "subscription"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-            }`}
-          onClick={() => setActiveTab("subscription")}
-        >
-          Subscription
-        </button>
-        <button
-          className={`py-3 px-6 font-medium text-lg ${activeTab === "saved"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-            }`}
-          onClick={() => setActiveTab("saved")}
-        >
-          Saved Workouts
-        </button>
-      </div>
-
-      {/* Profile Tab */}
-      {activeTab === "profile" && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Your Profile</h2>
-          <div className="mb-6">
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center">
-                <span className="text-3xl font-bold text-indigo-600">
-                  {user?.email.charAt(0).toUpperCase()}
-                </span>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pt-6 pb-12 mt-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-teal-500 to-emerald-600">Dashboard</h1>
+              <p className="text-gray-600 mt-1">Welcome back, {user?.email ? user.email.split('@')[0] : 'Athlete'}</p>
             </div>
+            <div className="flex items-center gap-4">
+              {!user?.is_premium && (
+                <Link
+                  to="/subscription"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 transition-all shadow-md hover:shadow-lg"
+                >
+                  <FiAward className="mr-2" />
+                  Upgrade to Premium
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <div className="px-4 py-2 bg-gray-100 rounded-md">{user?.email}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Account Type
-                </label>
-                <div className="px-4 py-2 bg-gray-100 rounded-md flex items-center">
-                  {isPremium() ? (
-                    <>
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium mr-2">
-                        Premium
-                      </span>
-                      <span>You have access to all content</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm font-medium mr-2">
-                        Standard
-                      </span>
-                      <span>
-                        <a href="/subscription" className="text-indigo-600 hover:text-indigo-500 hover:underline">
-                          Upgrade to Premium
-                        </a> for full access
-                      </span>
-                    </>
-                  )}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all border-none overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-teal-100 rounded-bl-full opacity-50"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-teal-100 rounded-full">
+                  <FiActivity className="w-6 h-6 text-teal-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Active Programs</p>
+                  <h3 className="text-2xl font-bold text-gray-900">{activePrograms.length}</h3>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all border-none overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-100 rounded-bl-full opacity-50"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-emerald-100 rounded-full">
+                  <FiCalendar className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Weeks Completed</p>
+                  <h3 className="text-2xl font-bold text-gray-900">{12 - weekLeft}</h3>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all border-none overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-100 rounded-bl-full opacity-50"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-cyan-100 rounded-full">
+                  <FiUser className="w-6 h-6 text-cyan-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Membership</p>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {user?.is_premium ? "Premium" : "Free"}
+                  </h3>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="programs" className="space-y-6">
+          <div className="flex justify-center mb-4">
+            <TabsList className="bg-white rounded-xl shadow-md flex space-x-1 w-auto border border-gray-100">
+              <TabsTrigger
+                value="programs"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 text-sm font-medium"
+              >
+                <FiActivity className="w-4 h-4 mr-2" />
+                My Programs
+              </TabsTrigger>
+              <TabsTrigger
+                value="progress"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 text-sm font-medium"
+              >
+                <FiCalendar className="w-4 h-4 mr-2" />
+                Progress
+              </TabsTrigger>
+              <TabsTrigger
+                value="profile"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 text-sm font-medium"
+              >
+                <FiUser className="w-4 h-4 mr-2" />
+                Profile
+              </TabsTrigger>
+            </TabsList>
           </div>
 
-          <div className="pt-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      )}
+          <TabsContent value="programs">
+            <div className="grid gap-6">
+              <Card className="bg-white shadow-md hover:shadow-lg transition-all border-none overflow-hidden">
+                <CardHeader className="border-b border-gray-100 pb-4">
+                  <CardTitle className="text-xl font-bold text-gray-900">Active Programs</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {activePrograms.map((program) => (
+                      <ProgramProgress
+                        key={program.id}
+                        programId={program.id}
+                        status={program.status}
+                        title={program.title}
+                        description={program.description}
+                        total_exercises={program.total_exercises}
+                        completed_exercises={program.completed_exercises}
+                      />
+                    ))}
+                  </div>
+                  {activePrograms.length === 0 && (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600 mb-4">You haven't started any programs yet.</p>
+                      <Link
+                        to="/programs"
+                        className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 transition-all shadow-sm hover:shadow-md font-medium"
+                      >
+                        Browse Programs
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-      {/* Subscription Tab */}
-      {activeTab === "subscription" && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Your Subscription</h2>
+              <Card className="bg-white shadow-md hover:shadow-lg transition-all border-none overflow-hidden">
+                <CardHeader className="border-b border-gray-100 pb-4">
+                  <CardTitle className="text-xl font-bold text-gray-900">Saved Programs</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {savedPrograms.map((program) => (
+                      <ProgramProgress
+                        key={program.id}
+                        programId={program.program_id}
+                        status="saved"
+                        title={program.title}
+                        description={program.description}
+                        total_exercises={program.total_exercises}
+                      />
+                    ))}
+                  </div>
+                  {savedPrograms.length === 0 && (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600 mb-4">You haven't saved any programs yet.</p>
+                      <Link
+                        to="/programs"
+                        className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 transition-all shadow-sm hover:shadow-md font-medium"
+                      >
+                        Browse Programs
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-          {isPremium() ? (
-            <div className="mb-6">
-              <div className="p-4 mb-6 bg-green-50 border border-green-200 rounded-md">
-                <h3 className="text-lg font-medium text-green-800 mb-2">Active Subscription</h3>
-                <p className="text-green-700">
-                  You have an active premium subscription with access to all content and features.
-                </p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-md p-4">
-                <h4 className="font-medium mb-2">Premium Benefits</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Access to all workout programs
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Nutrition meal plans and recipes
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Save and customize workouts
-                  </li>
-                </ul>
-              </div>
+              <Card className="bg-white shadow-md hover:shadow-lg transition-all border-none overflow-hidden">
+                <CardHeader className="border-b border-gray-100 pb-4">
+                  <CardTitle className="text-xl font-bold text-gray-900">Available Programs</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Link
+                      to="/programs/musclebuilding"
+                      className="group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1"
+                    >
+                      <img src={mb1} alt="Muscle Building" className="w-full h-64 object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 flex flex-col justify-end">
+                        <h3 className="text-2xl font-bold text-white mb-2">Muscle Building</h3>
+                        <p className="text-gray-200">Build strength and muscle mass with our comprehensive program</p>
+                      </div>
+                    </Link>
+                    <Link
+                      to="/programs/bodyweight"
+                      className="group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1"
+                    >
+                      <img src={bw1} alt="Bodyweight" className="w-full h-64 object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 flex flex-col justify-end">
+                        <h3 className="text-2xl font-bold text-white mb-2">Bodyweight</h3>
+                        <p className="text-gray-200">Train anywhere, no equipment needed</p>
+                      </div>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          ) : (
-            <div className="mb-6">
-              <div className="p-4 mb-6 bg-yellow-50 border border-yellow-200 rounded-md">
-                <h3 className="text-lg font-medium text-yellow-800 mb-2">No Active Subscription</h3>
-                <p className="text-yellow-700">
-                  You're currently on the free plan with limited access to content.
-                </p>
-              </div>
+          </TabsContent>
 
-              <div className="bg-white border border-gray-200 rounded-md p-4 mb-6">
-                <h4 className="font-medium mb-2">Premium Benefits</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Access to all workout programs
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Nutrition meal plans and recipes
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Save and customize workouts
-                  </li>
-                </ul>
-              </div>
-
-              <a
-                href="/subscription"
-                className="block w-full py-3 px-4 bg-indigo-600 text-white font-medium text-center rounded-md hover:bg-indigo-700 transition-colors"
-              >
-                Upgrade to Premium
-              </a>
+          <TabsContent value="progress">
+            <div className="space-y-6">
+              <ProgressOverview
+                activePrograms={activePrograms}
+                savedPrograms={savedPrograms}
+              />
             </div>
-          )}
-        </div>
-      )}
+          </TabsContent>
 
-      {/* Saved Workouts Tab */}
-      {activeTab === "saved" && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Saved Workouts</h2>
+          <TabsContent value="profile">
+            <div className="grid gap-6 md:grid-cols-3">
+              <Card className="md:col-span-2 bg-white/50 backdrop-blur-sm border border-gray-100/50 shadow-sm hover:shadow-md transition-all duration-300">
+                <CardHeader className="border-b border-gray-100/50 pb-4">
+                  <CardTitle className="text-lg font-medium text-gray-800">Profile Information</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-8">
+                  <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 rounded-full bg-gray-100/70 flex items-center justify-center text-gray-700 text-2xl font-bold">
+                      {user?.email?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-medium text-gray-800">{user?.email}</h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${user?.is_premium
+                          ? "bg-gray-100 text-gray-700"
+                          : "bg-gray-50 text-gray-500"
+                          }`}>
+                          {user?.is_premium ? "Premium Member" : "Free Member"}
+                        </span>
+                        {user?.is_premium && (
+                          <span className="text-xs text-gray-400">Member since {new Date().toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-          {!isPremium() ? (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-              <h3 className="text-lg font-medium text-yellow-800 mb-2">Premium Feature</h3>
-              <p className="text-yellow-700 mb-4">
-                Saving workouts is a premium feature. Upgrade to access this functionality.
-              </p>
-              <a
-                href="/subscription"
-                className="inline-block py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition-colors"
-              >
-                Upgrade to Premium
-              </a>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-4">
+                      <h3 className="text-base font-medium text-gray-800">Account Details</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <FiUser className="w-5 h-5 text-gray-400" />
+                          <span>Email: {user?.email}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <FiCalendar className="w-5 h-5 text-gray-400" />
+                          <span>Joined: {new Date().toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-600">
+                          <FiActivity className="w-5 h-5 text-gray-400" />
+                          <span>Active Programs: {activePrograms.length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-100/50">
+                    <h3 className="text-base font-medium text-gray-800 mb-4">Account Actions</h3>
+                    <div className="flex gap-4">
+                      <button
+                        onClick={handleLogout}
+                        className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-medium"
+                      >
+                        <FiLogOut className="mr-2" />
+                        Sign Out
+                      </button>
+                      <button
+                        onClick={() => {/* Add password change handler */ }}
+                        className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-medium"
+                      >
+                        <FiLock className="mr-2" />
+                        Change Password
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/50 backdrop-blur-sm border border-gray-100/50 shadow-sm hover:shadow-md transition-all duration-300">
+                <CardHeader className="border-b border-gray-100/50 pb-4">
+                  <CardTitle className="text-lg font-medium text-gray-800">Achievements</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-yellow-50 flex items-center justify-center">
+                      <span className="text-yellow-500">🏆</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">First Program</p>
+                      <p className="text-xs text-gray-500">Complete your first program</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
+                      <span className="text-gray-400">🔒</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">Consistency King</p>
+                      <p className="text-xs text-gray-500">Complete 4 weeks in a row</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-gray-600">You haven't saved any workouts yet.</p>
-              <a
-                href="/programs/all"
-                className="inline-block py-2 px-4 border border-indigo-600 text-indigo-600 font-medium rounded-md hover:bg-indigo-50 transition-colors"
-              >
-                Browse Programs
-              </a>
-            </div>
-          )}
-        </div>
-      )}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
