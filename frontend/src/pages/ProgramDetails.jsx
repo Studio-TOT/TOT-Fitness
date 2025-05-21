@@ -279,99 +279,142 @@ function ProgramDetails() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-            {/* Hero Section */}
-            <div
-                className="relative h-screen bg-cover bg-center bg-fixed"
-                style={{ backgroundImage: `url(${programs.find(p => p.id === programId)?.image})` }}
-            >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
-                <div className="absolute inset-0 flex flex-col justify-end p-12">
-                    <div className="max-w-7xl mx-auto w-full">
-                        <div className="flex items-center justify-between mb-6">
-                            <Link
-                                to="/programs"
-                                onClick={handleNav}
-                                className="inline-flex items-center bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/20 transition-all"
-                            >
-                                <img className="w-5 h-5 mr-2 invert" src={backarrow} alt="back" />
-                                <span className="font-medium">Back to Programs</span>
-                            </Link>
-                            <button
-                                onClick={handleSaveProgram}
-                                disabled={isSaving || isSaved}
-                                className={`px-6 py-2 rounded-full font-medium transition-all ${isSaved
-                                    ? 'bg-green-500 text-white cursor-default'
-                                    : 'bg-white text-indigo-600 hover:bg-gray-100'
-                                    }`}
-                            >
-                                {isSaving ? 'Saving...' : isSaved ? 'Saved to Dashboard' : 'Save to Dashboard'}
-                            </button>
+        <div className="min-h-screen bg-white">
+            {/* Hero Section with Parallax Effect */}
+            <div className="relative h-[50vh] md:h-[70vh] overflow-hidden">
+                <div
+                    className="absolute inset-0 bg-cover bg-center bg-fixed transform scale-105"
+                    style={{
+                        backgroundImage: `url(${programs.find(p => p.id === programId)?.image})`,
+                        transform: 'translateZ(0)'
+                    }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
+
+                {/* Floating Action Buttons */}
+                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                    <button
+                        onClick={handleNav}
+                        className="w-10 h-10 flex items-center justify-center bg-black/30 backdrop-blur-md rounded-full text-white hover:bg-black/40 transition-all"
+                    >
+                        <img className="w-5 h-5 invert" src={backarrow} alt="back" />
+                    </button>
+                    <button
+                        onClick={handleSaveProgram}
+                        disabled={isSaving || isSaved}
+                        className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${isSaved
+                                ? 'bg-green-500 text-white'
+                                : 'bg-black/30 backdrop-blur-md text-white hover:bg-black/40'
+                            }`}
+                    >
+                        {isSaving ? (
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : isSaved ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        )}
+                    </button>
+                </div>
+
+                {/* Program Info Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-white text-sm">
+                                {programId === 'cardio' || programId === 'strength' ? 'Premium' : 'Free'}
+                            </span>
+                            <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-white text-sm">
+                                12 Weeks
+                            </span>
                         </div>
-                        <h1 className="text-5xl font-bold text-white mb-6">{programInfo.title}</h1>
-                        <p className="text-gray-200 text-xl max-w-3xl">{programInfo.longDescription}</p>
+                        <h1 className="text-3xl md:text-5xl font-bold text-white mb-3">{programInfo.title}</h1>
+                        <p className="text-gray-200 text-base md:text-lg max-w-2xl opacity-90 mb-12">{programInfo.description}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Program Schedule */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="space-y-6">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-8">12-Week Program Schedule</h2>
-                    {weekArr.map((week, index) => (
-                        <Accordion
-                            key={`week-${week}`}
-                            expanded={expandedWeek === index}
-                            onChange={() => handleWeekChange(index)}
-                            sx={{
-                                backgroundColor: "white !important",
-                                borderRadius: "16px !important",
-                                border: "none",
-                                color: "black",
-                                margin: "8px auto !important",
-                                width: "100%",
-                                fontFamily: "Arial !important",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-                                transition: "all 0.3s ease-in-out",
-                                "&:hover": {
-                                    transform: "translateY(-2px)",
-                                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
-                                },
-                            }}
-                        >
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel1a-content"
-                                id="panel1a-header"
-                                className="bg-white hover:bg-gray-50 transition-colors duration-200"
-                            >
-                                <div className="flex items-center w-full">
-                                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full mr-4">
-                                        <span className="text-lg font-bold">{index + 1}</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-xl font-bold text-gray-800">Week {index + 1}</p>
-                                        <p className="text-sm text-gray-500">3 days of training</p>
-                                    </div>
-                                </div>
-                            </AccordionSummary>
-                            <AccordionDetails className="p-0">
-                                <div className="p-6 bg-gray-50">
-                                    {dayArr.map((day, dayIndex) => (
-                                        <div
-                                            key={`day-${day}`}
-                                            className="mb-6 last:mb-0"
-                                        >
-                                            <Day
-                                                day={day}
-                                                exercises={program[index]?.[dayIndex] || []}
-                                            />
+            {/* Program Content */}
+            <div className="relative -mt-6 md:-mt-12 rounded-t-3xl bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-3 gap-4 mb-8">
+                        <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                            <div className="text-2xl font-bold text-gray-900">12</div>
+                            <div className="text-sm text-gray-500">Weeks</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                            <div className="text-2xl font-bold text-gray-900">36</div>
+                            <div className="text-sm text-gray-500">Workouts</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                            <div className="text-2xl font-bold text-gray-900">3</div>
+                            <div className="text-sm text-gray-500">Days/Week</div>
+                        </div>
+                    </div>
+
+                    {/* Program Description */}
+                    <div className="mb-8">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">About This Program</h2>
+                        <p className="text-gray-600 leading-relaxed">{programInfo.longDescription}</p>
+                    </div>
+
+                    {/* Week Selector */}
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Program Schedule</h2>
+                            <div className="text-sm text-gray-500 md:hidden">
+                                {expandedWeek !== null ? `Week ${expandedWeek + 1}` : 'Select a week'}
+                            </div>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+                            {weekArr.map((week, index) => (
+                                <button
+                                    key={week}
+                                    onClick={() => handleWeekChange(index)}
+                                    className={`flex-shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all ${expandedWeek === index
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    <span className="text-lg font-bold">Week</span>
+                                    <span className="text-2xl font-bold">{week}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Week Content */}
+                    {expandedWeek !== null && (
+                        <div className="space-y-4">
+                            {dayArr.map((day, dayIndex) => (
+                                <div
+                                    key={`day-${day}`}
+                                    className="bg-gray-50 rounded-2xl p-4"
+                                >
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                                            {day}
                                         </div>
-                                    ))}
+                                        <div>
+                                            <h3 className="font-bold text-gray-900">Day {day}</h3>
+                                            <p className="text-sm text-gray-500">
+                                                {program[expandedWeek]?.[dayIndex]?.length || 0} exercises
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Day
+                                        day={day}
+                                        exercises={program[expandedWeek]?.[dayIndex] || []}
+                                    />
                                 </div>
-                            </AccordionDetails>
-                        </Accordion>
-                    ))}
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

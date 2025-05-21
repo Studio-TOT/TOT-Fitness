@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 
 function MannequinWrapper() {
   return (
-    <section className="py-12 px-4 md:px-12 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 max-w-6xl mx-auto mt-10 mb-16">
+    <section id="ex" className="py-12 px-4 md:px-12 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 max-w-6xl mx-auto mt-10 mb-16">
       <div className="mb-10 text-center">
         <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-2">Interactive Muscle Guide</h2>
         <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-lg">

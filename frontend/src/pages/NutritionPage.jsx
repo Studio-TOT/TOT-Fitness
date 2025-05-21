@@ -88,20 +88,11 @@ function NutritionPage({ data }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Full-width banner with image and scroll effect */}
-      <div className="w-full h-[400px] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="/images/nutrition-banner.jpg"
-            alt="Nutrition Banner"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="relative h-full flex items-center">
-          <div className="container mx-auto px-4">
-            <div className="Nutrition-banner">
-              <p className="text-4xl md:text-5xl font-bold text-white mb-4">Eat clean.</p>
-              <p className="text-2xl md:text-3xl text-white/90">Reach your goals.</p>
-            </div>
+      <div className="Nutrition-banner flex items-center w-full">
+        <div className="container mx-auto px-4 relative flex items-center justify-center">
+          <div className="max-w-2xl absolute z-10">
+            <p className="text-5xl font-bold text-white mb-2 md:mb-4">Eat clean.</p>
+            <p className="text-4xl text-white/90">Reach your goals.</p>
           </div>
         </div>
       </div>
@@ -118,13 +109,13 @@ function NutritionPage({ data }) {
 
         {/* Category Menu */}
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4 mb-8 border-b">
-          <div className="flex items-center justify-center space-x-4 overflow-x-auto pb-2">
+          <div className="flex items-center justify-start space-x-2 md:space-x-4 overflow-x-auto pb-2 scrollbar-hide">
             {categoryOrder.map((category) => (
               <Button
                 key={category}
                 variant={activeCategory === category ? "default" : "ghost"}
                 onClick={() => setActiveCategory(category)}
-                className={`whitespace-nowrap ${activeCategory === category
+                className={`whitespace-nowrap text-sm md:text-base ${activeCategory === category
                   ? "bg-teal-500 text-white hover:bg-teal-600"
                   : "hover:bg-teal-50"
                   }`}
@@ -137,8 +128,8 @@ function NutritionPage({ data }) {
 
         {/* Selected Category Content */}
         <div className="space-y-6">
-          <h3 className="text-2xl font-bold">{activeCategory}</h3>
-          <div className={`w-full transition-all duration-300 ${expandedCategories[activeCategory] ? 'min-h-[600px]' : 'h-[600px]'}`}>
+          <h3 className="text-xl md:text-2xl font-bold">{activeCategory}</h3>
+          <div className={`w-full transition-all duration-300 ${expandedCategories[activeCategory] ? 'min-h-[600px]' : 'h-[600px]'} overflow-hidden`}>
             <Masonry
               data={expandedCategories[activeCategory]
                 ? currentRecipes

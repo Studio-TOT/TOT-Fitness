@@ -15,10 +15,11 @@ const navItems = [
     },
     {
         label: 'Nutrition',
-        href: '/Nutritionpage',
+        href: '/',
         icon: null,
-        type: 'link',
+        type: 'scroll',
         isPremium: true,
+        scrollId: 'nutrition',
     },
 ];
 

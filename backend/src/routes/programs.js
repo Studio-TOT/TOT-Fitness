@@ -394,8 +394,8 @@ router.post("/:id/start", authenticateToken, async (req, res) => {
             // Create new progress
             await pool.query(
                 `INSERT INTO user_program_progress 
-                (user_id, program_id, current_week, current_day, started_at, status)
-                VALUES ($1, $2, 1, 1, NOW(), 'in_progress')`,
+        (user_id, program_id, current_week, current_day, started_at, status)
+        VALUES ($1, $2, 1, 1, NOW(), 'in_progress')`,
                 [req.user.id, programId]
             );
             res.json({ message: "Program started successfully" });

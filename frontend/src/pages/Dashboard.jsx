@@ -160,7 +160,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pt-6 pb-12 mt-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+        <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-teal-500 to-emerald-600">Dashboard</h1>
@@ -413,17 +413,17 @@ export default function Dashboard() {
 
                   <div className="pt-6 border-t border-gray-100/50">
                     <h3 className="text-base font-medium text-gray-800 mb-4">Account Actions</h3>
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
                       <button
                         onClick={handleLogout}
-                        className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-medium"
+                        className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-medium"
                       >
                         <FiLogOut className="mr-2" />
                         Sign Out
                       </button>
                       <button
                         onClick={() => {/* Add password change handler */ }}
-                        className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-medium"
+                        className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-medium"
                       >
                         <FiLock className="mr-2" />
                         Change Password

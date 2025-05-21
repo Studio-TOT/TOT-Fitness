@@ -34,18 +34,6 @@ function MobileNavbar({ navItems, user, logout, setAuthOpen, iconColor }) {
     // Mobile toolbar items
     const toolbarItems = [...navItems];
 
-    // If user is logged in, add a Dashboard/Profile link
-    if (user) {
-        const dashboardItem = {
-            label: 'Profile',
-            type: 'link',
-            href: '/dashboard',
-        };
-
-        // Insert Dashboard before the last item (which is typically the auth button)
-        toolbarItems.splice(toolbarItems.length, 0, dashboardItem);
-    }
-
     return (
         <nav className="navbar-mobile">
             <ul className="flex justify-evenly items-center">
@@ -54,12 +42,7 @@ function MobileNavbar({ navItems, user, logout, setAuthOpen, iconColor }) {
                         {item.type === 'link' ? (
                             <Link to={item.href} className="flex flex-col items-center text-xs">
                                 <div className="relative">
-                                    {item.label === 'Profile' ?
-                                        <div className="w-7 h-7 mb-1 flex items-center justify-center bg-indigo-100 rounded-full">
-                                            <FiUser className="text-indigo-600" />
-                                        </div> :
-                                        iconMap[item.label] && <img src={iconMap[item.label]} alt="" width="30px" className="nav-icon mb-1" />
-                                    }
+                                    {iconMap[item.label] && <img src={iconMap[item.label]} alt="" width="30px" className="nav-icon mb-1" />}
                                     {item.isPremium && (
                                         <span className="absolute -top-1 -right-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
                                             PRO
@@ -80,7 +63,7 @@ function MobileNavbar({ navItems, user, logout, setAuthOpen, iconColor }) {
                 ))}
                 <li className="flex flex-col items-center">
                     <NavAuthButton user={user} logout={logout} setAuthOpen={setAuthOpen} iconColor="text-black" />
-                    <span className="text-xs mt-1">{user ? 'Account' : 'Sign In'}</span>
+                    <span className="text-xs mt-1">{user ? 'Profile' : 'Sign In'}</span>
                 </li>
             </ul>
         </nav>

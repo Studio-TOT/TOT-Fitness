@@ -66,18 +66,18 @@ function Masonry({ data, onItemClick }) {
     return (
         <div
             ref={ref}
-            className="relative w-full h-full"
+            className="relative w-full"
             style={{ height: Math.max(...heights) }}
         >
             {transitions((style, item) => (
                 <a.div
                     key={item.id}
                     style={style}
-                    className={`absolute ${isDesktop ? 'p-[8px]' : 'p-[15px]'} [will-change:transform,width,height,opacity]`}
+                    className={`absolute ${isDesktop ? 'p-2' : 'p-1'} [will-change:transform,width,height,opacity]`}
                 >
                     <div
                         onClick={() => onItemClick && onItemClick(item)}
-                        className="relative w-full h-full overflow-hidden uppercase text-[10px] leading-[10px] rounded-[4px] shadow-[0px_10px_50px_-10px_rgba(0,0,0,0.2)] transition duration-300 ease hover:scale-105 cursor-pointer"
+                        className="relative w-full h-full overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
                         style={{
                             backgroundColor: '#ffffff',
                             backgroundImage: `url(${item.image})`,
@@ -85,8 +85,8 @@ function Masonry({ data, onItemClick }) {
                             backgroundPosition: 'center',
                         }}
                     >
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-                            <p className="text-white text-sm font-medium">{item.text}</p>
+                        <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 bg-gradient-to-t from-black/70 to-transparent">
+                            <p className="text-white text-xs md:text-sm font-medium line-clamp-2">{item.text}</p>
                         </div>
                     </div>
                 </a.div>
