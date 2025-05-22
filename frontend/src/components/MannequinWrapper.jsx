@@ -18,31 +18,31 @@ function MannequinWrapper() {
 
       {/* Mobile View */}
       <div className="md:hidden">
-        <div className="mySwiper">
-          <Swiper
-            spaceBetween={30}
-            pagination
-            modules={[Pagination]}
-            className="mySwiper"
-          >
-            <SwiperSlide>
-              <MannequinFront className="mannequin" />
-            </SwiperSlide>
-            <SwiperSlide>
-              <MannequinBack className="mannequin" />
-            </SwiperSlide>
-          </Swiper>
+      <div className="mySwiper">
+        <Swiper
+          spaceBetween={30}
+          pagination
+          modules={[Pagination]}
+          className="mySwiper"
+        >
+          <SwiperSlide>
+            <MannequinFront className="mannequin" />
+          </SwiperSlide>
+          <SwiperSlide>
+            <MannequinBack className="mannequin" />
+          </SwiperSlide>
+        </Swiper>
         </div>
       </div>
 
       {/* Desktop View */}
       <div className="hidden md:block">
         <div className="container mx-auto px-4 py-8">
-          <div className="DesktopSwiper">
-            <MannequinFront className="mannequin-front" />
-            <MannequinBack className="mannequin-back" />
-          </div>
-        </div>
+      <div className="DesktopSwiper">
+        <MannequinFront className="mannequin-front" />
+        <MannequinBack className="mannequin-back" />
+      </div>
+    </div>
       </div>
 
       {/* Quick Info */}

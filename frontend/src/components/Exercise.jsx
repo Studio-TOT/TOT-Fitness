@@ -18,7 +18,10 @@ function Exercise({
   video = null,
   description = [],
   category = null,
-  difficulty = null
+  difficulty = null,
+  sets = null,
+  reps = null,
+  rest_time = null
 }) {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -117,6 +120,13 @@ function Exercise({
               <Typography className="text-sm md:text-base font-semibold text-gray-800 truncate">
                 {name}
               </Typography>
+              {(sets || reps || rest_time) && (
+                <Typography className="text-xs text-gray-600">
+                  {sets && `${sets} sets`}
+                  {reps && ` × ${reps} reps`}
+                  {rest_time && ` • ${rest_time}s rest`}
+                </Typography>
+              )}
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               {category && (
@@ -198,6 +208,9 @@ Exercise.propTypes = {
   description: PropTypes.arrayOf(PropTypes.string),
   category: PropTypes.string,
   difficulty: PropTypes.string,
+  sets: PropTypes.number,
+  reps: PropTypes.number,
+  rest_time: PropTypes.number
 };
 
 export default Exercise;

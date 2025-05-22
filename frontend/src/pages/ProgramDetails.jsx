@@ -27,6 +27,7 @@ function ProgramDetails() {
     const { isPremium, user, token } = useAuth();
     const { exercises, isLoading, error, fetchExercises } = useExercises();
     const [program, setProgram] = useState([]);
+    const [userProgram, setUserProgram] = useState(null);
     const [expandedWeek, setExpandedWeek] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
@@ -135,6 +136,49 @@ function ProgramDetails() {
         checkIfProgramSaved();
     }, [user, token, programId]);
 
+    useEffect(() => {
+        const fetchUserProgram = async () => {
+            console.log('Token:', token);
+            console.log('User:', user);
+            if (!token) {
+                console.log('No token available');
+                return;
+            }
+
+            try {
+                console.log('Fetching program:', programId);
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/programs/${programId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                console.log('Response status:', response.status);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Program data:', data);
+                    // Handle both direct program data and nested program_data
+                    const programData = data.program_data || data;
+                    setUserProgram(programData);
+                    // If it's a user program, set the program state with the weeks data
+                    if (programData.weeks) {
+                        setProgram(programData.weeks);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    console.error('Error response:', errorData);
+                }
+            } catch (error) {
+                console.error("Error fetching user program:", error);
+            }
+        };
+
+        // Only fetch user program if it's not a predefined program ID
+        if (!['bodyweight', 'bootypump', 'fullbody', 'musclebuilding', 'cardio', 'strength'].includes(programId)) {
+            fetchUserProgram();
+        }
+    }, [programId, token, user]);
+
     const handleNav = () => {
         navigate(-1);
     };
@@ -143,10 +187,26 @@ function ProgramDetails() {
         setExpandedWeek(expandedWeek === index ? null : index);
     };
 
-    const dayArr = Array.from({ length: 3 }, (v, k) => k + 1);
-    const weekArr = Array.from({ length: 12 }, (v, k) => k + 1);
+    const dayArr = userProgram
+        ? Array.from({ length: userProgram.weeks?.[0]?.days?.length || 0 }, (v, k) => k + 1)
+        : Array.from({ length: 3 }, (v, k) => k + 1);
+    const weekArr = userProgram
+        ? Array.from({ length: userProgram.weeks?.length || 0 }, (v, k) => k + 1)
+        : Array.from({ length: 12 }, (v, k) => k + 1);
 
     const getProgramInfo = () => {
+        // If we have a user program, return its info
+        if (userProgram) {
+            return {
+                title: userProgram.name || "Untitled Program",
+                description: userProgram.description || "No description available",
+                longDescription: userProgram.description || "No description available",
+                weeks: userProgram.weeks?.length || 0,
+                daysPerWeek: userProgram.weeks?.[0]?.days?.length || 0
+            };
+        }
+
+        // Otherwise, handle predefined programs
         switch (programId) {
             case "bodyweight":
                 return {
@@ -279,7 +339,7 @@ function ProgramDetails() {
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white sm:mt-16">
             {/* Hero Section with Parallax Effect */}
             <div className="relative h-[50vh] md:h-[70vh] overflow-hidden">
                 <div
@@ -303,8 +363,8 @@ function ProgramDetails() {
                         onClick={handleSaveProgram}
                         disabled={isSaving || isSaved}
                         className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${isSaved
-                                ? 'bg-green-500 text-white'
-                                : 'bg-black/30 backdrop-blur-md text-white hover:bg-black/40'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-black/30 backdrop-blur-md text-white hover:bg-black/40'
                             }`}
                     >
                         {isSaving ? (
@@ -326,10 +386,10 @@ function ProgramDetails() {
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center gap-2 mb-3">
                             <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-white text-sm">
-                                {programId === 'cardio' || programId === 'strength' ? 'Premium' : 'Free'}
+                                {userProgram ? 'Custom' : (programId === 'cardio' || programId === 'strength' ? 'Premium' : 'Free')}
                             </span>
                             <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-white text-sm">
-                                12 Weeks
+                                {userProgram ? `${userProgram.weeks?.length || 0} Weeks` : '12 Weeks'}
                             </span>
                         </div>
                         <h1 className="text-3xl md:text-5xl font-bold text-white mb-3">{programInfo.title}</h1>
@@ -344,15 +404,24 @@ function ProgramDetails() {
                     {/* Quick Stats */}
                     <div className="grid grid-cols-3 gap-4 mb-8">
                         <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                            <div className="text-2xl font-bold text-gray-900">12</div>
+                            <div className="text-2xl font-bold text-gray-900">
+                                {userProgram ? userProgram.weeks?.length || 0 : 12}
+                            </div>
                             <div className="text-sm text-gray-500">Weeks</div>
                         </div>
                         <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                            <div className="text-2xl font-bold text-gray-900">36</div>
+                            <div className="text-2xl font-bold text-gray-900">
+                                {userProgram ?
+                                    userProgram.weeks?.reduce((total, week) =>
+                                        total + week.days.filter(day => day.exercises.length > 0).length, 0) || 0
+                                    : 36}
+                            </div>
                             <div className="text-sm text-gray-500">Workouts</div>
                         </div>
                         <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                            <div className="text-2xl font-bold text-gray-900">3</div>
+                            <div className="text-2xl font-bold text-gray-900">
+                                {userProgram ? userProgram.weeks?.[0]?.days?.length || 0 : 3}
+                            </div>
                             <div className="text-sm text-gray-500">Days/Week</div>
                         </div>
                     </div>
@@ -377,8 +446,8 @@ function ProgramDetails() {
                                     key={week}
                                     onClick={() => handleWeekChange(index)}
                                     className={`flex-shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all ${expandedWeek === index
-                                            ? 'bg-indigo-600 text-white'
-                                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                                         }`}
                                 >
                                     <span className="text-lg font-bold">Week</span>
@@ -391,28 +460,39 @@ function ProgramDetails() {
                     {/* Week Content */}
                     {expandedWeek !== null && (
                         <div className="space-y-4">
-                            {dayArr.map((day, dayIndex) => (
-                                <div
-                                    key={`day-${day}`}
-                                    className="bg-gray-50 rounded-2xl p-4"
-                                >
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
-                                            {day}
+                            {dayArr.map((day, dayIndex) => {
+                                // Get the current week and day data
+                                const weekData = userProgram
+                                    ? userProgram.weeks[expandedWeek]
+                                    : program[expandedWeek];
+                                const dayData = userProgram
+                                    ? weekData?.days[dayIndex]
+                                    : { exercises: program[expandedWeek]?.[dayIndex] || [] };
+
+                                return (
+                                    <div
+                                        key={`day-${day}`}
+                                        className="bg-gray-50 rounded-2xl p-4"
+                                    >
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                                                {day}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-900">Day {day}</h3>
+                                                <p className="text-sm text-gray-500">
+                                                    {dayData?.exercises?.length || 0} exercises
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-900">Day {day}</h3>
-                                            <p className="text-sm text-gray-500">
-                                                {program[expandedWeek]?.[dayIndex]?.length || 0} exercises
-                                            </p>
-                                        </div>
+                                        <Day
+                                            day={day}
+                                            description={dayData?.description}
+                                            exercises={dayData?.exercises || []}
+                                        />
                                     </div>
-                                    <Day
-                                        day={day}
-                                        exercises={program[expandedWeek]?.[dayIndex] || []}
-                                    />
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

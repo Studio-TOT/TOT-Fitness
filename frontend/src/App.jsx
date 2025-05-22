@@ -23,6 +23,7 @@ import { ExerciseProvider } from "./context/ExerciseContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProgramWorkout from "./components/ProgramWorkout";
 import ExerciseDetails from './pages/ExerciseDetails';
+import ProgramBuilder from "./pages/ProgramBuilder";
 
 // Layout component to wrap pages with Navbar and Footer
 function Layout({ children, isTransparentNav }) {
@@ -131,6 +132,17 @@ function App() {
               <Layout>
                 <ProtectedRoute>
                   <ProgramWorkout />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/program-builder"
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <ProgramBuilder />
                 </ProtectedRoute>
               </Layout>
             }

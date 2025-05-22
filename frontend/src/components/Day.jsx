@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import Exercise from "./Exercise";
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
-function Day({ day, exercises = [] }) {
+function Day({ day, exercises = [], description = "" }) {
   if (!Array.isArray(exercises)) {
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -22,19 +22,31 @@ function Day({ day, exercises = [] }) {
       <div className="flex items-center mb-3 md:mb-4">
         <CalendarTodayIcon className="text-blue-500 mr-2" />
         <h3 className="text-lg font-semibold text-gray-800">Day {day}</h3>
+        {description && (
+          <span className="ml-2 text-sm text-gray-600">{description}</span>
+        )}
       </div>
       <div className="space-y-2 md:space-y-4 -mx-2 md:mx-0">
-        {exercises.map((exercise) => (
-          <div key={exercise?.id} className="px-2 md:px-0">
-            <Exercise
-              name={exercise?.exercise_name}
-              video={exercise?.images?.male?.[0]?.branded_video || exercise?.images?.female?.[0]?.branded_video}
-              description={exercise?.steps}
-              category={exercise?.category}
-              difficulty={exercise?.difficulty}
-            />
-          </div>
-        ))}
+        {exercises.map((exercise) => {
+          // Handle both predefined and user-created program exercise formats
+          const exerciseData = {
+            id: exercise.id,
+            name: exercise.exercise_name || exercise.name,
+            video: exercise.images?.male?.[0]?.branded_video || exercise.images?.female?.[0]?.branded_video,
+            description: exercise.steps || [],
+            category: exercise.category,
+            difficulty: exercise.difficulty,
+            sets: exercise.sets,
+            reps: exercise.reps,
+            rest_time: exercise.rest_time
+          };
+
+          return (
+            <div key={exerciseData.id} className="px-2 md:px-0">
+              <Exercise {...exerciseData} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -42,12 +54,17 @@ function Day({ day, exercises = [] }) {
 
 Day.propTypes = {
   day: PropTypes.number.isRequired,
+  description: PropTypes.string,
   exercises: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
       exercise_name: PropTypes.string,
+      name: PropTypes.string,
       category: PropTypes.string,
       difficulty: PropTypes.string,
+      sets: PropTypes.number,
+      reps: PropTypes.number,
+      rest_time: PropTypes.number,
       equipment: PropTypes.arrayOf(PropTypes.string),
       target: PropTypes.shape({
         Primary: PropTypes.arrayOf(PropTypes.string),

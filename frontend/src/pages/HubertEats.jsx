@@ -104,7 +104,7 @@ function HubertEats({ data }) {
         <Button
           variant="ghost"
           className="mb-6 hover:bg-teal-50"
-          onClick={handleNav}
+              onClick={handleNav}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -167,7 +167,7 @@ function HubertEats({ data }) {
                       layoutId="activeTab"
                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400"
                     />
-                  )}
+                )}
                 </Button>
                 <Button
                   variant={activeTab === "instructions" ? "default" : "ghost"}

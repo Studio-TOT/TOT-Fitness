@@ -102,7 +102,7 @@ const ProgramWorkout = () => {
 
             // Update completed exercises based on the response
             if (data.completed) {
-                setCompletedExercises([...completedExercises, exerciseId]);
+            setCompletedExercises([...completedExercises, exerciseId]);
             } else {
                 setCompletedExercises(completedExercises.filter(id => id !== exerciseId));
             }

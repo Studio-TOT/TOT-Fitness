@@ -13,8 +13,11 @@ import { toast } from "../components/ui/use-toast";
 
 const ProgramBuilder = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
-    const { exercises } = useExercises();
+    const { user, token } = useAuth();
+    const { exercises, fetchExercises } = useExercises();
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
     const [program, setProgram] = useState({
         name: "",
         description: "",
@@ -34,6 +37,29 @@ const ProgramBuilder = () => {
 
     const [activeWeek, setActiveWeek] = useState(0);
     const [activeDay, setActiveDay] = useState(0);
+
+    useEffect(() => {
+        if (!exercises || exercises.length === 0) {
+            setIsLoading(true);
+            fetchExercises().finally(() => setIsLoading(false));
+        }
+    }, [exercises, fetchExercises]);
+
+    // Helper function to get exercises for the select dropdown
+    const getExercisesForSelect = () => {
+        if (!exercises) return [];
+        // Handle both array and paginated response formats
+        const exerciseList = Array.isArray(exercises) ? exercises : exercises.data || [];
+        return exerciseList
+            .filter(ex =>
+                ex.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                ex.exercise_name?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .map(ex => ({
+                id: ex.id.toString(),
+                name: ex.name || ex.exercise_name
+            }));
+    };
 
     const handleProgramChange = (field, value) => {
         setProgram(prev => ({
@@ -126,35 +152,61 @@ const ProgramBuilder = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Check if we have a valid token
+        if (!token) {
+            toast({
+                title: "Authentication Error",
+                description: "Please log in again to create a program",
+                variant: "destructive"
+            });
+            navigate('/login');
+            return;
+        }
+
         try {
-            const response = await fetch("/api/programs", {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/programs`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify(program)
             });
 
-            if (!response.ok) throw new Error("Failed to create program");
+            if (!response.ok) {
+                const errorData = await response.json();
+                if (response.status === 403) {
+                    // Token is invalid or expired
+                    toast({
+                        title: "Session Expired",
+                        description: "Please log in again to continue",
+                        variant: "destructive"
+                    });
+                    navigate('/login');
+                    return;
+                }
+                throw new Error(errorData.error || "Failed to create program");
+            }
 
             const data = await response.json();
             toast({
                 title: "Success",
                 description: "Program created successfully"
             });
-            navigate(`/programs/${data.id}`);
+            navigate(`/programs/${data.slug}`);
         } catch (error) {
+            console.error("Error creating program:", error);
             toast({
                 title: "Error",
-                description: error.message,
+                description: error.message || "Failed to create program",
                 variant: "destructive"
             });
         }
     };
 
     return (
-        <div className="container mx-auto py-8">
+        <div className="container mx-auto py-8 mt-12">
             <h1 className="text-3xl font-bold mb-8">Create New Program</h1>
 
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -281,12 +333,26 @@ const ProgramBuilder = () => {
                                                                                         <SelectTrigger>
                                                                                             <SelectValue placeholder="Select exercise" />
                                                                                         </SelectTrigger>
-                                                                                        <SelectContent>
-                                                                                            {exercises.map((ex) => (
-                                                                                                <SelectItem key={ex.id} value={ex.id.toString()}>
-                                                                                                    {ex.name}
-                                                                                                </SelectItem>
-                                                                                            ))}
+                                                                                        <SelectContent className="max-h-[300px] overflow-y-auto">
+                                                                                            <div className="sticky top-0 z-10 p-2 bg-background border-b">
+                                                                                                <Input
+                                                                                                    placeholder="Search exercises..."
+                                                                                                    value={searchTerm}
+                                                                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                                                                    className="w-full"
+                                                                                                />
+                                                                                            </div>
+                                                                                            {isLoading ? (
+                                                                                                <div className="p-4 text-center">Loading exercises...</div>
+                                                                                            ) : getExercisesForSelect().length === 0 ? (
+                                                                                                <div className="p-4 text-center">No exercises found</div>
+                                                                                            ) : (
+                                                                                                getExercisesForSelect().map((ex) => (
+                                                                                                    <SelectItem key={ex.id} value={ex.id}>
+                                                                                                        {ex.name}
+                                                                                                    </SelectItem>
+                                                                                                ))
+                                                                                            )}
                                                                                         </SelectContent>
                                                                                     </Select>
                                                                                 </div>

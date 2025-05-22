@@ -360,8 +360,8 @@ export default function Dashboard() {
               <ProgressOverview
                 activePrograms={activePrograms}
                 savedPrograms={savedPrograms}
-              />
-            </div>
+                          />
+                        </div>
           </TabsContent>
 
           <TabsContent value="profile">
@@ -447,13 +447,13 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-500">Complete your first program</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
-                      <span className="text-gray-400">🔒</span>
-                    </div>
-                    <div>
+                          <span className="text-gray-400">🔒</span>
+                        </div>
+                        <div>
                       <p className="text-sm font-medium text-gray-800">Consistency King</p>
-                      <p className="text-xs text-gray-500">Complete 4 weeks in a row</p>
+                          <p className="text-xs text-gray-500">Complete 4 weeks in a row</p>
                     </div>
                   </div>
                 </CardContent>
