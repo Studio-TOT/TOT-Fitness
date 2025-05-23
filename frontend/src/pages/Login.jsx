@@ -11,10 +11,6 @@ function Login() {
 
     const { login, socialLogin } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
-
-    // Get the redirect path from state or default to homepage
-    const from = location.state?.from || '/';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -23,8 +19,7 @@ function Login() {
 
         try {
             await login(email, password);
-            // Navigate to the page they were trying to access
-            navigate(from);
+            navigate('/dashboard');
         } catch (err) {
             setError(err.message);
         } finally {
@@ -48,7 +43,7 @@ function Login() {
                 // Simulating OAuth flow for development purposes
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 await socialLogin(provider, 'mock_token');
-                navigate(from);
+                navigate('/dashboard');
             } else {
                 // In production, we'd set up proper OAuth
                 setError(`${provider} login not yet implemented. Coming soon!`);
