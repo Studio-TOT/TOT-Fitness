@@ -87,17 +87,23 @@ export default function Dashboard() {
         // Handle saved programs
         const savedPrograms = data.savedPrograms.map(program => ({
           id: program.id,
-          program_id: program.program_id,
-          title: program.program_info.title,
-          description: program.program_info.description,
+          program_id: program.id,
+          title: program.name,
+          description: program.description,
           status: "saved",
-          total_exercises: program.program_data.weeks.reduce((acc, week) =>
-            acc + week.days.reduce((dayAcc, day) => dayAcc + day.exercises.length, 0), 0),
-          completed_exercises: 0 // Since it's saved but not started
+          type: "user_created",
+          image_url: program.image_url,
+          total_exercises: program.total_exercises,
+          completed_exercises: 0, // Since it's saved but not started
+          user_email: program.user_email || user?.email // Add user email
         }));
 
         // Handle predefined programs
-        const predefinedPrograms = data.predefinedPrograms || [];
+        const predefinedPrograms = data.predefinedPrograms.map(program => ({
+          ...program,
+          type: "predefined",
+          user_email: null // No user email for official programs
+        })) || [];
 
         // Combine and filter active programs
         const allPrograms = [...savedPrograms, ...predefinedPrograms];
@@ -275,6 +281,9 @@ export default function Dashboard() {
                         description={program.description}
                         total_exercises={program.total_exercises}
                         completed_exercises={program.completed_exercises}
+                        image_url={program.image_url}
+                        type={program.type}
+                        user_email={program.user_email}
                       />
                     ))}
                   </div>
@@ -306,6 +315,9 @@ export default function Dashboard() {
                         title={program.title}
                         description={program.description}
                         total_exercises={program.total_exercises}
+                        image_url={program.image_url}
+                        type={program.type}
+                        user_email={program.user_email}
                       />
                     ))}
                   </div>
@@ -360,8 +372,8 @@ export default function Dashboard() {
               <ProgressOverview
                 activePrograms={activePrograms}
                 savedPrograms={savedPrograms}
-                          />
-                        </div>
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="profile">
@@ -447,13 +459,13 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-500">Complete your first program</p>
                     </div>
                   </div>
-                      <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
-                          <span className="text-gray-400">🔒</span>
-                        </div>
-                        <div>
+                      <span className="text-gray-400">🔒</span>
+                    </div>
+                    <div>
                       <p className="text-sm font-medium text-gray-800">Consistency King</p>
-                          <p className="text-xs text-gray-500">Complete 4 weeks in a row</p>
+                      <p className="text-xs text-gray-500">Complete 4 weeks in a row</p>
                     </div>
                   </div>
                 </CardContent>

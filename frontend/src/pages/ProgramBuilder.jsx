@@ -21,6 +21,7 @@ const ProgramBuilder = () => {
     const [program, setProgram] = useState({
         name: "",
         description: "",
+        image_url: "",
         difficulty: "beginner",
         duration_weeks: 4,
         is_public: false,
@@ -233,6 +234,18 @@ const ProgramBuilder = () => {
                                 placeholder="Enter program description"
                                 required
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Program Image URL (Optional)</label>
+                            <Input
+                                value={program.image_url || ''}
+                                onChange={(e) => handleProgramChange("image_url", e.target.value)}
+                                placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Add an image URL to display as background for your program card
+                            </p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

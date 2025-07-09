@@ -15,6 +15,13 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Day from "../components/Day";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../components/ui/select";
+import {
     generateBootyPumpProgram,
     generateMuscleBuildingProgram,
     generateFullBodyProgram,
@@ -258,56 +265,71 @@ function ProgramDetails() {
         setError(null);
 
         try {
-            // Create a simplified program data structure
-            const simplifiedProgramData = {
-                programId: programId,
-                programData: {
-                    id: programId,
-                    title: programInfo.title,
-                    description: programInfo.description,
-                    longDescription: programInfo.longDescription,
-                    weeks: program.map((week, weekIndex) => ({
-                        weekNumber: weekIndex + 1,
-                        days: week.map((day, dayIndex) => ({
-                            dayNumber: dayIndex + 1,
-                            exercises: day.map(exercise => ({
-                                id: exercise.id,
-                                name: exercise.name,
-                                sets: exercise.sets,
-                                reps: exercise.reps,
-                                restTime: exercise.restTime
+            if (isSaved) {
+                // Unsave the program
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/saved-programs/${programId}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to unsave program");
+                }
+
+                setIsSaved(false);
+            } else {
+                // Create a simplified program data structure
+                const simplifiedProgramData = {
+                    programId: programId,
+                    programData: {
+                        id: programId,
+                        title: programInfo.title,
+                        description: programInfo.description,
+                        longDescription: programInfo.longDescription,
+                        weeks: program.map((week, weekIndex) => ({
+                            weekNumber: weekIndex + 1,
+                            days: week.map((day, dayIndex) => ({
+                                dayNumber: dayIndex + 1,
+                                exercises: day.map(exercise => ({
+                                    id: exercise.id,
+                                    name: exercise.name,
+                                    sets: exercise.sets,
+                                    reps: exercise.reps,
+                                    restTime: exercise.restTime
+                                }))
                             }))
                         }))
-                    }))
-                },
-                programInfo: {
-                    title: programInfo.title,
-                    description: programInfo.description,
-                    longDescription: programInfo.longDescription
+                    },
+                    programInfo: {
+                        title: programInfo.title,
+                        description: programInfo.description,
+                        longDescription: programInfo.longDescription
+                    }
+                };
+
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/save-program`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(simplifiedProgramData),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error("Error response:", errorData);
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
                 }
-            };
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/save-program`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(simplifiedProgramData),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error("Error response:", errorData);
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                setIsSaved(true);
             }
-
-            const data = await response.json();
-            setIsSaved(true);
         } catch (error) {
-            console.error("Error saving program:", error);
-            setError(error.message || "Failed to save program. Please try again.");
-            setIsSaved(false);
+            console.error("Error saving/unsaving program:", error);
+            setError(error.message || "Failed to save/unsave program. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -316,7 +338,7 @@ function ProgramDetails() {
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
             </div>
         );
     }
@@ -329,7 +351,7 @@ function ProgramDetails() {
                     <p className="text-gray-600">{error}</p>
                     <button
                         onClick={handleNav}
-                        className="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                        className="mt-4 bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition-colors"
                     >
                         Go Back
                     </button>
@@ -361,23 +383,27 @@ function ProgramDetails() {
                     </button>
                     <button
                         onClick={handleSaveProgram}
-                        disabled={isSaving || isSaved}
-                        className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${isSaved
-                            ? 'bg-green-500 text-white'
+                        disabled={isSaving}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${isSaved
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
                             : 'bg-black/30 backdrop-blur-md text-white hover:bg-black/40'
                             }`}
                     >
                         {isSaving ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
                         ) : isSaved ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                                <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
                             </svg>
                         ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                             </svg>
                         )}
+                        {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save Program'}
                     </button>
                 </div>
 
@@ -436,24 +462,23 @@ function ProgramDetails() {
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-bold text-gray-900">Program Schedule</h2>
-                            <div className="text-sm text-gray-500 md:hidden">
-                                {expandedWeek !== null ? `Week ${expandedWeek + 1}` : 'Select a week'}
-                            </div>
                         </div>
-                        <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-                            {weekArr.map((week, index) => (
-                                <button
-                                    key={week}
-                                    onClick={() => handleWeekChange(index)}
-                                    className={`flex-shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all ${expandedWeek === index
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    <span className="text-lg font-bold">Week</span>
-                                    <span className="text-2xl font-bold">{week}</span>
-                                </button>
-                            ))}
+                        <div className="mb-4">
+                            <Select
+                                value={expandedWeek !== null ? expandedWeek.toString() : ''}
+                                onValueChange={(value) => handleWeekChange(value === '' ? null : parseInt(value))}
+                            >
+                                <SelectTrigger className="w-[160px] bg-gray-50 rounded-2xl p-4">
+                                    <SelectValue placeholder="Select a week" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {weekArr.map((week, index) => (
+                                        <SelectItem key={week} value={index.toString()}>
+                                            Week {week}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
@@ -470,27 +495,12 @@ function ProgramDetails() {
                                     : { exercises: program[expandedWeek]?.[dayIndex] || [] };
 
                                 return (
-                                    <div
+                                    <Day
                                         key={`day-${day}`}
-                                        className="bg-gray-50 rounded-2xl p-4"
-                                    >
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
-                                                {day}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-gray-900">Day {day}</h3>
-                                                <p className="text-sm text-gray-500">
-                                                    {dayData?.exercises?.length || 0} exercises
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Day
-                                            day={day}
-                                            description={dayData?.description}
-                                            exercises={dayData?.exercises || []}
-                                        />
-                                    </div>
+                                        day={day}
+                                        description={dayData?.description}
+                                        exercises={dayData?.exercises || []}
+                                    />
                                 );
                             })}
                         </div>
