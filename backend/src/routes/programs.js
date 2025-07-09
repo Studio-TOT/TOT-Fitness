@@ -65,21 +65,20 @@ const getProgram = async (idOrSlug, userId) => {
                                 'sets', pe.sets,
                                 'reps', pe.reps,
                                 'rest_time', pe.rest_time,
-                                'notes', pe.notes
-                            )
+                                'notes', pe.notes,
+                                'order_index', pe.order_index
+                            ) ORDER BY pe.order_index
                         )
                         FROM program_exercises pe
                         JOIN exercises e ON pe.exercise_id = e.id
                         LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
                         LEFT JOIN difficulties d ON ed.difficulty_id = d.id
                         WHERE pe.program_day_id = pd.id
-                        ORDER BY pe.order_index
                     )
-                )
+                ) ORDER BY pd.day_number
             )
             FROM program_days pd
-            WHERE pd.program_week_id = pw.id
-            ORDER BY pd.day_number) as days
+            WHERE pd.program_week_id = pw.id) as days
             FROM program_weeks pw
             WHERE pw.program_id = $1
             ORDER BY pw.week_number`,
@@ -141,21 +140,20 @@ const getProgram = async (idOrSlug, userId) => {
                                     'sets', pe.sets,
                                     'reps', pe.reps,
                                     'rest_time', pe.rest_time,
-                                    'notes', pe.notes
-                                )
+                                    'notes', pe.notes,
+                                    'order_index', pe.order_index
+                                ) ORDER BY pe.order_index
                             )
                             FROM program_exercises pe
                             JOIN exercises e ON pe.exercise_id = e.id
                             LEFT JOIN exercise_details ed ON e.id = ed.exercise_id
                             LEFT JOIN difficulties d ON ed.difficulty_id = d.id
                             WHERE pe.program_day_id = pd.id
-                            ORDER BY pe.order_index
                         )
-                    )
+                    ) ORDER BY pd.day_number
                 )
                 FROM program_days pd
-                WHERE pd.program_week_id = pw.id
-                ORDER BY pd.day_number) as days
+                WHERE pd.program_week_id = pw.id) as days
                 FROM program_weeks pw
                 WHERE pw.program_id = $1
                 ORDER BY pw.week_number`,
@@ -170,10 +168,20 @@ const getProgram = async (idOrSlug, userId) => {
     return null;
 };
 
+// Helper function to get program ID from ID or slug
+const getProgramId = async (idOrSlug, userId) => {
+    const program = await getProgram(idOrSlug, userId);
+    if (!program) {
+        throw new Error('Program not found');
+    }
+    return program.type === 'saved_program' ? program.data.program_id : program.data.id;
+};
+
 // Get all programs (both predefined and user's saved programs)
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
+        console.log('Fetching programs for user:', userId);
 
         // Get user's saved programs
         const savedProgramsQuery = `
@@ -183,6 +191,10 @@ router.get('/', authenticateToken, async (req, res) => {
             WHERE sp.user_id = $1
         `;
         const savedPrograms = await pool.query(savedProgramsQuery, [userId]);
+        console.log('Saved programs query result:', {
+            count: savedPrograms.rows.length,
+            programs: savedPrograms.rows
+        });
 
         // Get predefined programs with progress
         const predefinedProgramsQuery = `
@@ -203,6 +215,29 @@ router.get('/', authenticateToken, async (req, res) => {
             ORDER BY p.id
         `;
         const predefinedPrograms = await pool.query(predefinedProgramsQuery, [userId]);
+        console.log('Predefined programs query result:', {
+            count: predefinedPrograms.rows.length,
+            programs: predefinedPrograms.rows
+        });
+
+        // Format saved programs to match the expected structure
+        const formattedSavedPrograms = savedPrograms.rows.map(program => ({
+            id: program.program_id,
+            name: program.program_info.title,
+            description: program.program_info.description,
+            type: 'saved',
+            weeks: program.program_data.weeks?.length || 0,
+            days_per_week: program.program_data.weeks?.[0]?.days?.length || 0,
+            total_exercises: program.program_data.weeks?.reduce((acc, week) =>
+                acc + (week.days?.reduce((dayAcc, day) =>
+                    dayAcc + (day.exercises?.length || 0), 0) || 0), 0) || 0,
+            image_url: program.program_data.image_url,
+            created_at: program.created_at,
+            updated_at: program.updated_at,
+            user_email: program.user_email
+        }));
+
+        console.log('Formatted saved programs:', formattedSavedPrograms);
 
         const programs = predefinedPrograms.rows.map(program => ({
             ...program,
@@ -211,8 +246,13 @@ router.get('/', authenticateToken, async (req, res) => {
                 : 0
         }));
 
+        console.log('Final response data:', {
+            savedProgramsCount: formattedSavedPrograms.length,
+            predefinedProgramsCount: programs.length
+        });
+
         res.json({
-            savedPrograms: savedPrograms.rows,
+            savedPrograms: formattedSavedPrograms,
             predefinedPrograms: programs
         });
     } catch (error) {
@@ -238,8 +278,9 @@ router.get("/:idOrSlug", authenticateToken, async (req, res) => {
             return res.json(program.data);
         }
 
-        // Handle predefined program...
-        // Rest of the code for predefined programs remains unchanged...
+        // Handle predefined program
+        console.log('Returning predefined program:', program.data);
+        return res.json(program.data);
     } catch (err) {
         console.error('Error fetching program:', err);
         res.status(500).json({ error: "Server error" });
@@ -286,9 +327,9 @@ router.post("/", authenticateToken, async (req, res) => {
 
         // Insert program
         const programResult = await client.query(
-            `INSERT INTO programs (id, name, description, type, created_by, is_public, difficulty, duration_weeks, slug)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, name, description, slug`,
+            `INSERT INTO programs (id, name, description, type, created_by, is_public, difficulty, duration_weeks, image_url, slug)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING id, name, description, image_url, slug`,
             [
                 nextId,
                 req.body.name.trim(),
@@ -298,6 +339,7 @@ router.post("/", authenticateToken, async (req, res) => {
                 is_public,
                 difficulty,
                 duration_weeks,
+                req.body.image_url || null,
                 slug
             ]
         );
@@ -422,6 +464,7 @@ router.post("/", authenticateToken, async (req, res) => {
             description: program.description || '',
             type: 'user_created',
             slug: program.slug,
+            image_url: program.image_url,
             weeks: weeks
         };
 
@@ -481,14 +524,15 @@ router.put("/:id", authenticateToken, async (req, res) => {
         // Update program details
         await client.query(
             `UPDATE programs 
-      SET name = $1, description = $2, is_public = $3, difficulty = $4, duration_weeks = $5
-      WHERE id = $6`,
+      SET name = $1, description = $2, is_public = $3, difficulty = $4, duration_weeks = $5, image_url = $6
+      WHERE id = $7`,
             [
                 req.body.name,
                 req.body.description,
                 req.body.is_public,
                 req.body.difficulty,
                 req.body.duration_weeks,
+                req.body.image_url || null,
                 req.params.id,
             ]
         );
@@ -625,7 +669,7 @@ router.post("/:id/like", authenticateToken, async (req, res) => {
 // Start a program
 router.post("/:id/start", authenticateToken, async (req, res) => {
     try {
-        const programId = getProgramId(req.params.id);
+        const programId = await getProgramId(req.params.id, req.user.id);
         const { rows } = await pool.query(
             "SELECT * FROM user_program_progress WHERE program_id = $1 AND user_id = $2",
             [programId, req.user.id]
@@ -684,7 +728,7 @@ router.put("/:id/progress", authenticateToken, async (req, res) => {
 // Get program progress
 router.get("/:programId/progress", authenticateToken, async (req, res) => {
     try {
-        const programId = getProgramId(req.params.programId);
+        const programId = await getProgramId(req.params.programId, req.user.id);
         const userId = req.user.id;
 
         const result = await pool.query(
@@ -724,7 +768,7 @@ router.get("/:programId/progress", authenticateToken, async (req, res) => {
 // Get completed exercises for a specific workout (week/day)
 router.get("/:programId/workout/:week/:day/completed", authenticateToken, async (req, res) => {
     try {
-        const programId = getProgramId(req.params.programId);
+        const programId = await getProgramId(req.params.programId, req.user.id);
         const { week, day } = req.params;
         const userId = req.user.id;
 
@@ -769,7 +813,7 @@ router.get("/:programId/workout/:week/:day/completed", authenticateToken, async 
 // Complete an exercise in a workout
 router.post("/:programId/workout/:week/:day/complete/:exerciseId", authenticateToken, async (req, res) => {
     try {
-        const programId = getProgramId(req.params.programId);
+        const programId = await getProgramId(req.params.programId, req.user.id);
         const { week, day, exerciseId } = req.params;
         const userId = req.user.id;
 
@@ -861,7 +905,7 @@ router.post("/:programId/workout/:week/:day/complete/:exerciseId", authenticateT
 // Complete an entire workout (week/day)
 router.post("/:programId/workout/:week/:day/complete", authenticateToken, async (req, res) => {
     try {
-        const programId = getProgramId(req.params.programId);
+        const programId = await getProgramId(req.params.programId, req.user.id);
         const { week, day } = req.params;
         const userId = req.user.id;
 
