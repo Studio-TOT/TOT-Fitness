@@ -5,6 +5,7 @@ const authRouter = require('./routes/auth').router;
 const subscriptionRouter = require('./routes/subscription');
 const usersRouter = require('./routes/users');
 const programsRouter = require('./routes/programs');
+const savedProgramsRouter = require('./routes/savedPrograms');
 
 // Mount routes
 app.use('/api/exercises', exercisesRouter);
@@ -13,6 +14,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/programs', programsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/subscription', subscriptionRouter);
+app.use('/api/users/saved-programs', savedProgramsRouter);
 
 const port = process.env.PORT || 3000;
 

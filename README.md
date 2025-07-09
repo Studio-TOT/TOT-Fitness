@@ -1,40 +1,96 @@
-## Concept
+# TOT Fitness Club
 
-This template is meant to serve as a foundation for every P2/P3 following the React-Express-MySQL stack, as learned in Wild Code School.
-It's pre-configured with a set of tools which'll help students produce industry-quality and easier-to-maintain code, while staying as simple as possible to use.
+A fitness application with workout programs, nutrition information, and premium subscription features.
+
+## Features
+
+- **Authentication System**: Email/password registration and login with social authentication options (Google, Apple, Facebook)
+- **Premium Subscription**: Access to exclusive workout programs and features through Stripe payments
+- **Workout Programs**: Various programs including Muscle Building, Bodyweight, Booty Pump, and Full Body workouts
+- **Exercise Database**: Comprehensive collection of exercises with descriptions and muscle targeting
+- **Nutrition Guide**: Healthy recipes and meal plans for fitness enthusiasts
+
+## Project Structure
+
+The project is organized into frontend and backend directories:
+
+- **Frontend**: React application using Vite, Tailwind CSS, and React Router
+- **Backend**: Express API with PostgreSQL database integration
 
 ## Setup & Use
 
 ### Project Initialization
 
-- In VSCode, install plugins **Prettier - Code formatter** and **ESLint** and configure them
-- Clone this repo, enter it
-- If you are using `yarn` or `pnpm`, adapt the `config/cli` in `package.json`
-- Run command `npm install`
-- _NB: To launch the backend server, you'll need an environment file with database credentials. You'll find a template one in `backend/.env.sample`_
+- Clone this repository and navigate to the project root directory
+- Run `npm install` in both the frontend and backend directories
+- Create `.env` files in both frontend and backend directories (see example files)
+
+### Environment Configuration
+
+#### Backend (.env)
+```
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=yourpassword
+DB_NAME=tot_fitness
+
+# Authentication
+JWT_SECRET=your_secret_key
+
+# Stripe
+STRIPE_SECRET_KEY=your_stripe_secret_key
+```
+
+#### Frontend (.env)
+```
+# API URL
+VITE_API_URL=http://localhost:5000
+
+# OAuth Configuration
+VITE_ENABLE_MOCK_OAUTH=true
+
+# Stripe Configuration
+VITE_STRIPE_PUBLIC_KEY=your_stripe_public_key
+VITE_STRIPE_MONTHLY_PRICE_ID=price_monthly_id
+VITE_STRIPE_ANNUAL_PRICE_ID=price_annual_id
+
+# Feature flags
+VITE_ENABLE_PREMIUM_PROGRAMS=true
+```
 
 ### Available Commands
 
-- `migrate` : Run the database migration script
-- `dev` : Starts both servers (frontend + backend) in one terminal
-- `dev-front` : Starts the React frontend server
-- `dev-back` : Starts the Express backend server
-- `lint` : Runs validation tools, and refuses unclean code (will be executed on every _commit_)
-- `fix` : Fixes linter errors (run it if `lint` growls on your code !)
+- `npm run dev` : Starts both servers (frontend + backend) in one terminal
+- `npm run dev-front` : Starts the React frontend server
+- `npm run dev-back` : Starts the Express backend server
+- `npm run migrate` : Run the database migration script
+- `npm run lint` : Runs validation tools, and refuses unclean code
 
-## FAQ
+## Authentication System
 
-### Tools
+The application implements a complete authentication system with:
 
-- _Concurrently_ : Allows for several commands to run concurrently in the same CLI
-- _Husky_ : Allows to execute specific commands that trigger on _git_ events
-- _Vite_ : Alternative to _Create-React-App_, packaging less tools for a more fluid experience
-- _ESLint_ : "Quality of code" tool, ensures chosen rules will be enforced
-- _Prettier_ : "Quality of code" tool as well, focuses on the styleguide
-- _ Airbnb Standard_ : One of the most known "standards", even though it's not officially linked to ES/JS
-- _Nodemon_ : Allows to restart the server everytime a .js file is udated
+- Email/password registration and login
+- JWT-based authentication with token persistence
+- Social login options for Google, Apple, and Facebook (placeholders in development)
+- Protected routes that redirect unauthenticated users to login
 
-### Deployment
+### Testing OAuth in Development
+
+In development mode, social login is mocked to simulate the authentication flow without actual OAuth providers. Enable this by setting `VITE_ENABLE_MOCK_OAUTH=true` in your frontend environment.
+
+## Premium Features
+
+The application includes a subscription system with:
+
+- Premium and free content separation
+- Stripe payment integration for subscription management
+- User-friendly prompts for upgrading to premium
+- Preview functionality for premium content to encourage conversions
+
+## Deployment
 
 For deployment, you have to go to `secrets` → app `actions` on the github repo to insert via `New repository secret` :
 
@@ -42,3 +98,7 @@ For deployment, you have to go to `secrets` → app `actions` on the github repo
 - CAPROVER_FRONT_APPNAME : name app on caprover
 - CAPROVER_PASSWORD : password caprover
 - CAPROVER_SERVER : link of domain
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE.md file for details.

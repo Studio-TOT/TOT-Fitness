@@ -21,4 +21,35 @@ router.get("/", authenticateToken, async (req, res) => {
     }
 });
 
+// DELETE /api/users/saved-programs/:programId
+router.delete("/:programId", authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const programId = req.params.programId;
+
+        // First check if the program exists and belongs to the user
+        const checkQuery = `
+            SELECT id FROM saved_programs 
+            WHERE user_id = $1 AND program_id = $2
+        `;
+        const checkResult = await pool.query(checkQuery, [userId, programId]);
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Saved program not found' });
+        }
+
+        // Delete the saved program
+        const deleteQuery = `
+            DELETE FROM saved_programs 
+            WHERE user_id = $1 AND program_id = $2
+        `;
+        await pool.query(deleteQuery, [userId, programId]);
+
+        res.json({ message: 'Program unsaved successfully' });
+    } catch (error) {
+        console.error('Error unsaving program:', error);
+        res.status(500).json({ error: 'Failed to unsave program' });
+    }
+});
+
 module.exports = router; 
